@@ -6,12 +6,12 @@
 #include "PSACSketch.h"
 #include <fstream>
 
-
+CMSketch *Sketch = new CMSketch(3, 11092);
+std::unordered_map<std::string, uint> actual_size;
 
 int main(){
 	/*Insert your code here using the flowsize interface*/
-	CMSketch *Sketch = new CMSketch(3, 11092);
-	std::unordered_map<std::string, uint> actual_size;
+
 	std::ifstream file("binary.dat",std::ios::binary);
 	if(!file){
 		std::cout<<"error, file not found!\n";
