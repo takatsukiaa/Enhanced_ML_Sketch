@@ -15,6 +15,7 @@ public:
 	void LoadPara(cuc *path = CMPATH);
 	float Predict(uint *t);
 	float CalculateAAE_ML(cuc * str, uint acc_val, float query_val);
+	float CalculateARE(cuc * str, uint acc_val);
 private:
 	HashFunction *hf;
 	ushort** sketch;
@@ -77,8 +78,14 @@ uint CMSketch::Query(cuc *str, bool ml){
 		//if you want a float;
 		float result = Predict(t);
 		result = std::max((int)result, 1);
-        result = result > t[0] ? t[0] : result ;
-		return result;
+		if(result > t[0])
+		{
+			return t[0];
+		}
+		else
+		{
+			return result;
+		}
 		//if you want a integer;
 		//return (uint)Predict(t);
 	}
@@ -143,10 +150,19 @@ float CMSketch::CalculateAAE_ML(cuc * str, uint acc_val, float query_val)
 {
 	return abs(query_val - acc_val);
 }
+float CMSketch::CalculateARE(cuc* str, uint acc_val)
+{
+	for(uint i = 0; i < d; ++i){
+		uint cid = hf->Str2Int(str, i)%w;
+		t[i] = sketch[i][cid];
+	}
+	std::sort(t, t + d);
+	return abs(((float)t[0] - acc_val)/acc_val);
+}
 float CMSketch::Predict(uint *t){
 	float res = 0;
 	for(uint i = 0; i < d; ++i){
-		res += para[i]*(t[i]-mean[i])/scale[i];
+		res += para[i]*((t[i]-mean[i])/scale[i]);
 	}
 	return res;
 }
