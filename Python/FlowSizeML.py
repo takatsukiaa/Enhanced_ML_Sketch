@@ -27,7 +27,7 @@ def average_relative_error(y_true, y_pred):
 
 
 ## usage: python3 FlowSizeML.py <input_file> <output_file>
-## input_file: 輸入資料檔案(actural flow size , counter1, counter2, counter3)
+## input_file: 輸入資料檔案(actual flow size , counter1, counter2, counter3)
 ## output_file: 輸出模型參數檔案(mean1, mean2, mean3, 0, scale1, scale2, scale3, 1, coef1, coef2, coef3, 0), each counter has a mean, a scale and a coef
 
 ##mian
