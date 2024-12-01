@@ -30,7 +30,7 @@ def average_relative_error(y_true, y_pred):
 ## input_file: 輸入資料檔案(actual flow size , counter1, counter2, counter3)
 ## output_file: 輸出模型參數檔案(mean1, mean2, mean3, 0, scale1, scale2, scale3, 1, coef1, coef2, coef3, 0), each counter has a mean, a scale and a coef
 
-##mian
+##main
 SCALING_RATE = 1000  # 將流量大小縮小的比例
 print("FlowSizeML.py: Start to run...")
 
@@ -95,12 +95,9 @@ print(f"Predict ARE (20% Data): {are_predict:.2f}")
 # 將模型參數輸出到檔案
 for i in range(train_X.shape[1]):
     print(feature_scaler.mean_[i], file=f)
-print("0", file=f)  # 占位符
 for i in range(train_X.shape[1]):
     print(feature_scaler.scale_[i], file=f)
-print("1", file=f)  # 占位符
 for i in range(train_X.shape[1]):
     print(reg.coef_[i], file=f)
-print("0", file=f)  # 占位符
 
 print("FlowSizeML.py: Finish running.")

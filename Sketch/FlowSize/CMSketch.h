@@ -8,6 +8,7 @@ public:
 	CMSketch(uint d, uint w);
 	~CMSketch();
 	void Insert(cuc *str);
+	void Enhanced_Insert(cuc* str);
 	uint Query(cuc *str, bool ml = FALSE);
 	void PrintCounter(cuc* str, uint acc_val);
 	void PrintCounterFile(cuc * str, uint acc_val, FILE * fout);
@@ -18,20 +19,25 @@ public:
 	float CalculateARE(cuc * str, uint acc_val);
 private:
 	HashFunction *hf;
-	ushort** sketch;
+	ull** sketch;
 	float* para;
 	float* mean;
 	float* scale;
 	uint d;
 	uint w;
 	uint *t;
+	uchar** ov_flags;
 };
 
+
 CMSketch::CMSketch(uint d, uint w):d(d), w(w){
-	sketch = new ushort*[d];
+	sketch = new ull*[d];
+	ov_flags = new uchar*[d];
 	for(uint i = 0; i < d; ++i){
-		sketch[i] = new ushort[w];
-		memset(sketch[i], 0, sizeof(sketch[i]));
+		sketch[i] = new ull[w];
+		ov_flags[i] = new uchar[w];
+		memset(sketch[i], 0, w * sizeof(ull));
+		memset(ov_flags[i], 0, w * sizeof(uchar));
 	}
 	hf = new HashFunction();
 	para = new float[d];
@@ -59,6 +65,47 @@ void CMSketch::Insert(cuc *str){
 		++sketch[i][cid];
 	}
 }
+void CMSketch::Enhanced_Insert(cuc* str)
+{
+	ull min = 0;
+	uint cid[3];
+	for(uint i=0; i < d; i++)
+	{
+		cid[i] = hf->Str2Int(str, i) % w;
+		if(sketch[i][cid[i]] == -1)
+		{
+			return;
+		}
+	}
+	
+	for(uint i = 0; i < d; i++)
+	{
+		if(ov_flags[i][cid[i]] == '\0')
+		{
+			sketch[i][cid[i]] = sketch[i][cid[i]]<<32>>32;
+		}
+		++sketch[i][cid[i]];
+		if(i == 0)
+		{
+			min = sketch[i][cid[i]];
+		}
+		if(sketch[i][cid[i]] < min || sketch[i][cid[i]] == min)
+		{
+			min = sketch[i][cid[i]];
+		}
+		if(sketch[i][cid[i]]>UINT_MAX)
+		{
+			ov_flags[i][cid[i]] = 1;
+		}
+	}
+	for(uint i = 0; i < d; i++)
+	{
+		if(ov_flags[i][cid[i]] == '\0')
+		{
+			sketch[i][cid[i]] += min<<32;
+		}
+	}
+}
 
 uint CMSketch::Query(cuc *str, bool ml){
 	memset(t, 0, sizeof(t));
@@ -77,8 +124,7 @@ uint CMSketch::Query(cuc *str, bool ml){
 		std::sort(t, t+d);
 		//if you want a float;
 		float result = Predict(t);
-		result = std::max((int)result, 1);
-		if(result > t[0])
+		if(result > t[0] || result <= 0)
 		{
 			return t[0];
 		}

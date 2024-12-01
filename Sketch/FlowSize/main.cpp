@@ -6,7 +6,7 @@
 #include "PSACSketch.h"
 #include <fstream>
 
-CMSketch *Sketch = new CMSketch(3, 11092);
+CMSketch *Sketch = new CMSketch(3, 2810);
 std::unordered_map<std::string, uint> actual_size;
 
 int main(){
@@ -23,7 +23,7 @@ int main(){
 	{
 		std::string data(reinterpret_cast<char*>(buffer), file.gcount());
 		cuc* constData = buffer;
-		Sketch->Insert(constData);
+		Sketch->Enhanced_Insert(constData);
 		actual_size[data]++;
 	}
 	file.close();
@@ -35,7 +35,8 @@ int main(){
  	for (auto it = actual_size.begin(); it != actual_size.end(); ++it) 
 	{
         cuc* temp = reinterpret_cast<cuc*>(const_cast<char*>(it->first.c_str()));
-		Sketch->PrintCounterFile(temp, it->second, all_flows);
+		int second = it->second;
+		Sketch->PrintCounterFile(temp, second, all_flows);
     }
 	cuc* path = (unsigned char*)"parameter.txt";
 	Sketch->LoadPara(path);
@@ -46,17 +47,18 @@ int main(){
 		std::string data(reinterpret_cast<char*>(buffer), 13);
 		cuc* constData = buffer;
 		uint a = actual_size[data];
-		uint query_val = Sketch->Query(constData,false);
+		uint query_val;
+		query_val = Sketch->Query(constData);
 		AAE+=Sketch->CalculateAAE(constData,actual_size[data]);
 		ARE+=Sketch->CalculateARE(constData,actual_size[data]);
 		fprintf_s(out,"Actual Size: %u Query Value: %u\n", a, query_val);
 		// AAE+=Sketch->CalculateAAE_ML(constData,a,query_val);
-		Sketch->PrintCounterFile(constData,a,counters);
+		// Sketch->PrintCounterFile(constData,actual_size[data],counters);
 	}
 	AAE /= actual_size.size();
-	ARE /= actual_size.size();
+	// ARE /= actual_size.size();
 	std::cout<<"AAE: "<<AAE<<std::endl;
-	std::cout<<"ARE: "<<ARE<<std::endl;
+	// std::cout<<"ARE: "<<ARE<<std::endl;
 	fclose(out);
 	fclose(counters);
 	return 0;

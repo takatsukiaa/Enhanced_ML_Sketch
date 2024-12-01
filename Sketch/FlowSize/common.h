@@ -23,6 +23,7 @@
 typedef unsigned char uchar;
 typedef unsigned short ushort;
 typedef unsigned int uint; 
+typedef unsigned long ul;
 typedef long long unsigned int ull;
 typedef const unsigned char cuc;
 typedef unsigned int(*funPtr)(const unsigned char*, unsigned int);
