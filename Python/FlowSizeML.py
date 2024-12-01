@@ -1,8 +1,8 @@
 import sys
+import numpy as np
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn import linear_model
 from sklearn import preprocessing
-import numpy as np
 
 
 def average_relative_error(y_true, y_pred):
@@ -27,10 +27,10 @@ def average_relative_error(y_true, y_pred):
 
 
 ## usage: python3 FlowSizeML.py <input_file> <output_file>
-## input_file: 輸入資料檔案(actual flow size , counter1, counter2, counter3)
+## input_file: 輸入資料檔案(actural flow size , counter1, counter2, counter3)
 ## output_file: 輸出模型參數檔案(mean1, mean2, mean3, 0, scale1, scale2, scale3, 1, coef1, coef2, coef3, 0), each counter has a mean, a scale and a coef
 
-##main
+##mian
 SCALING_RATE = 1000  # 將流量大小縮小的比例
 print("FlowSizeML.py: Start to run...")
 
@@ -56,15 +56,18 @@ test_X = train_mat[test_idx, 1:4].copy()
 test_Y = train_mat[test_idx, 0].copy()
 
 # 篩選小於 THRESH 的資料
-mask_train = train_Y < THRESH
+# mask_train = train_Y < THRESH
+mask_train = (train_X[:,2] - train_X[:,0] )< THRESH
 train_X = train_X[mask_train]
 train_Y = train_Y[mask_train]
-
-mask_test = test_Y < THRESH
+print("train data size: ", train_X.shape)
+# mask_test = test_Y < THRESH
+mask_test = (test_X[:,2] - test_X[:,0]) < THRESH
 test_X = test_X[mask_test]
 test_Y = test_Y[mask_test]
+print("test data size: ", test_X.shape)
 
-mask_predict = predict_Y < THRESH
+mask_predict = (predict_X[:,2] - predict_X[:,0]) < THRESH
 predict_X = predict_X[mask_predict]
 predict_Y = predict_Y[mask_predict]
 
@@ -81,7 +84,7 @@ test_X = feature_scaler.transform(test_X)
 predicted_test_Y = reg.predict(test_X)
 mae_test = mean_absolute_error(test_Y, predicted_test_Y)
 are_test = average_relative_error(test_Y, predicted_test_Y)
-print(f"Test MAE: {mae_test:.2f}")
+print(f"Test AAE: {mae_test:.2f}")
 print(f"Test ARE: {are_test:.2f}")
 
 # 20% 資料預測及誤差計算
@@ -89,15 +92,18 @@ predict_X = feature_scaler.transform(predict_X)
 predicted_Y = reg.predict(predict_X)
 mae_predict = mean_absolute_error(predict_Y, predicted_Y)
 are_predict = average_relative_error(predict_Y, predicted_Y)
-print(f"Predict MAE (20% Data): {mae_predict:.2f}")
+print(f"Predict AAE (20% Data): {mae_predict:.2f}")
 print(f"Predict ARE (20% Data): {are_predict:.2f}")
 
 # 將模型參數輸出到檔案
 for i in range(train_X.shape[1]):
     print(feature_scaler.mean_[i], file=f)
+print("0", file=f)  # 占位符
 for i in range(train_X.shape[1]):
     print(feature_scaler.scale_[i], file=f)
+print("1", file=f)  # 占位符
 for i in range(train_X.shape[1]):
     print(reg.coef_[i], file=f)
+print("0", file=f)  # 占位符
 
 print("FlowSizeML.py: Finish running.")
