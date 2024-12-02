@@ -50,7 +50,7 @@ int main(){
 		uint query_val;
 		query_val = Sketch->Query(constData);
 		AAE+=Sketch->CalculateAAE(constData,actual_size[data]);
-		ARE+=Sketch->CalculateARE(constData,actual_size[data]);
+		// ARE+=Sketch->CalculateARE(constData,actual_size[data]);
 		fprintf_s(out,"Actual Size: %u Query Value: %u\n", a, query_val);
 		// AAE+=Sketch->CalculateAAE_ML(constData,a,query_val);
 		// Sketch->PrintCounterFile(constData,actual_size[data],counters);
