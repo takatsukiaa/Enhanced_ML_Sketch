@@ -1,13 +1,13 @@
 #include "CMSketch.h"
-#include "CMSACSketch.h"
-#include "CUSketch.h"
-#include "CUSACSketch.h"
-#include "PSketch.h"
-#include "PSACSketch.h"
+
+// #include "CUSketch.h"
+// #include "CUSACSketch.h"
+// #include "PSketch.h"
+// #include "PSACSketch.h"
 #include <fstream>
 
 CMSketch *Sketch = new CMSketch(3, 2810);
-std::unordered_map<std::string, uint> actual_size;
+std::unordered_map<std::string, ull> actual_size;
 
 int main(){
 	/*Insert your code here using the flowsize interface*/
@@ -46,12 +46,12 @@ int main(){
 	{
 		std::string data(reinterpret_cast<char*>(buffer), 13);
 		cuc* constData = buffer;
-		uint a = actual_size[data];
-		uint query_val;
+		ull a = actual_size[data];
+		ull query_val;
 		query_val = Sketch->Query(constData);
 		AAE+=Sketch->CalculateAAE(constData,actual_size[data]);
 		ARE+=Sketch->CalculateARE(constData,actual_size[data]);
-		fprintf_s(out,"Actual Size: %u Query Value: %u\n", a, query_val);
+		fprintf(out,"Actual Size: %llu Query Value: %llu\n", a, query_val);
 		// AAE+=Sketch->CalculateAAE_ML(constData,a,query_val);
 		// Sketch->PrintCounterFile(constData,actual_size[data],counters);
 	}

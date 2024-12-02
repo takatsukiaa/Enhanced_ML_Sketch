@@ -1,6 +1,6 @@
 #ifndef CMSKETCH_H
 #define CMSKETCH_H
-
+#include <climits>
 #include "common.h"
 
 struct CMSketch:public Sketch{
@@ -9,12 +9,12 @@ public:
 	~CMSketch();
 	void Insert(cuc *str);
 	void Enhanced_Insert(cuc* str);
-	uint Query(cuc *str, bool ml = FALSE);
+	ull Query(cuc *str, bool ml = FALSE);
 	void PrintCounter(cuc* str, uint acc_val);
 	void PrintCounterFile(cuc * str, uint acc_val, FILE * fout);
 	float CalculateAAE(cuc * str, uint acc_val);
 	void LoadPara(cuc *path = CMPATH);
-	float Predict(uint *t);
+	float Predict(ull *t);
 	float CalculateAAE_ML(cuc * str, uint acc_val, float query_val);
 	float CalculateARE(cuc * str, uint acc_val);
 private:
@@ -25,7 +25,7 @@ private:
 	float* scale;
 	uint d;
 	uint w;
-	uint *t;
+	ull *t;
 	uchar** ov_flags;
 };
 
@@ -43,7 +43,7 @@ CMSketch::CMSketch(uint d, uint w):d(d), w(w){
 	para = new float[d];
 	mean = new float[d];
 	scale = new float[d];
-	t = new uint[d];
+	t = new ull[d];
 }
 
 CMSketch::~CMSketch(){
@@ -107,23 +107,23 @@ void CMSketch::Enhanced_Insert(cuc* str)
 	}
 }
 
-uint CMSketch::Query(cuc *str, bool ml){
-	memset(t, 0, sizeof(t));
+ull CMSketch::Query(cuc *str, bool ml){
+	memset(t, 0, sizeof(t)*3);
 
-	uint Min = INF_SHORT;
+	ull Min;
 	for(uint i = 0; i < d; ++i){
 		uint cid = hf->Str2Int(str, i)%w;
 		t[i] = sketch[i][cid];
-		Min = std::min(Min, t[i]);
 	}
-
+	std::sort(t,t+d);
 	if (!ml || !need_analyze(t, d)) {
-		return (uint)Min;
+		Min = t[0];
+		return Min;
 	}
 	else {
 		std::sort(t, t+d);
 		//if you want a float;
-		float result = Predict(t);
+		ull result = Predict(t);
 		if(result > t[0] || result <= 0)
 		{
 			return t[0];
@@ -148,7 +148,7 @@ void CMSketch::PrintCounter(cuc* str, uint acc_val){
 		printf("%u", acc_val);
 		printf("Counter Values:");
 		for(uint i = 0; i < d; ++i){
-			printf(" %u", t[i]);
+			printf(" %llu", t[i]);
 		}
 		printf("\n");
 	}
@@ -165,9 +165,9 @@ void CMSketch::PrintCounterFile(cuc * str, uint acc_val, FILE * fout)
 	fprintf(fout, "%u ", acc_val);
 	// fprintf(fout, "Counter Values:");
 	for(uint i = 0; i < d-1; ++i){
-		fprintf(fout, "%u ", t[i]);
+		fprintf(fout, "%llu ", t[i]);
 	}
-	fprintf(fout,"%u",t[d-1]);
+	fprintf(fout,"%llu",t[d-1]);
 	fprintf(fout, "\n");
 }
 
@@ -205,7 +205,7 @@ float CMSketch::CalculateARE(cuc* str, uint acc_val)
 	std::sort(t, t + d);
 	return abs(((float)t[0] - acc_val)/acc_val);
 }
-float CMSketch::Predict(uint *t){
+float CMSketch::Predict(ull *t){
 	float res = 0;
 	for(uint i = 0; i < d; ++i){
 		res += para[i]*((t[i]-mean[i])/scale[i]);
