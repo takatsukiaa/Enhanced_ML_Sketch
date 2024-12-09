@@ -2,7 +2,7 @@
 #define CMSKETCH_H
 #include <climits>
 #include "common.h"
-
+#define THRESH 28
 struct CMSketch:public Sketch{
 public:
 	CMSketch(uint d, uint w);
@@ -121,17 +121,23 @@ ull CMSketch::Query(cuc *str, bool ml){
 		return Min;
 	}
 	else {
+		printf("using ml:\n");
 		std::sort(t, t+d);
-		//if you want a float;
 		ull result = Predict(t);
-		if(result > t[0] || result <= 0)
-		{
-			return t[0];
-		}
-		else
+		//if you want a float;
+		if(t[3] - t[1] <= THRESH && result>0 && result <= t[0])
 		{
 			return result;
 		}
+		return t[0];
+		// if(result > t[0] || result <= 0)
+		// {
+		// 	return t[0];
+		// }
+		// else
+		// {
+		// 	return result;
+		// }
 		//if you want a integer;
 		//return (uint)Predict(t);
 	}
@@ -172,13 +178,16 @@ void CMSketch::PrintCounterFile(cuc * str, uint acc_val, FILE * fout)
 }
 
 void CMSketch::LoadPara(cuc *path){
+	float temp;
 	FILE *file = fopen((const char*)path, "r");
 	for(uint i = 0; i < d; ++i){
 		fscanf(file, "%f", mean+i);
 	}
+	fscanf(file, "%f", &temp);
 	for(uint i = 0; i < d; ++i){
 		fscanf(file, "%f", scale+i);
 	}
+	fscanf(file, "%f", &temp);
 	for(uint i = 0; i < d; ++i){
 		fscanf(file, "%f", para+i);
 	}

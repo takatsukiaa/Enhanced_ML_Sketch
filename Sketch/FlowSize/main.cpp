@@ -51,12 +51,14 @@ int main(){
 		Sketch->PrintCounterFile(temp, second, all_flows);
 		AAE += Sketch->CalculateAAE(temp,second);
     }
+	printf("Total Packet Count: %u\n", packet_count);
+	// fprintf(all_flows,"Total Packet Count: %u\n", packet_count);
 
-	//load parameter form pre-trained model
+	// //load parameter form pre-trained model
 	cuc* path = (unsigned char*)"parameter.txt";
 	Sketch->LoadPara(path);
 	
-
+	float aae_ml = 0;
 	//query by each packet
 	//這邊不用print counter，因為會重複print FLOW的counter
 	while(file.read(reinterpret_cast<char*>(buffer),13)|| file.gcount() > 0)
@@ -66,17 +68,19 @@ int main(){
 		cuc* constData = buffer;
 		ull a = actual_size[data];
 		ull query_val;
-		query_val = Sketch->Query(constData);
+		query_val = Sketch->Query(constData, TRUE);
 		fprintf(out,"Actual Size: %llu Query Value: %llu\n", a, query_val);
-		// AAE+=Sketch->CalculateAAE_ML(constData,a,query_val);
-		
+		aae_ml+=Sketch->CalculateAAE_ML(constData,a,query_val);
 		// Sketch->PrintCounterFile(constData,actual_size[data],counters);
 	}
 	
 	AAE /= actual_size.size();
-
+	//aae_ml /= packet_count because qurey by each packet
+	aae_ml /= packet_count;
+	std::cout<<"AAE_ML: "<<aae_ml<<std::endl;
 	std::cout<<"AAE: "<<AAE<<std::endl;
-	// std::cout<<"ARE: "<<ARE<<std::endl;
+	std::cout<<"ARE: "<<ARE<<std::endl;
+	
 	fclose(out);
 	fclose(counters);
 	return 0;
