@@ -9,6 +9,7 @@ public:
 	~CMSketch();
 	void Insert(cuc *str);
 	void Enhanced_Insert(cuc* str);
+	void GetHashedValue(cuc *str, uint *counters);
 	ull Query(cuc *str, bool ml = FALSE);
 	void PrintCounter(cuc* str, uint acc_val);
 	void PrintCounterFile(cuc * str, uint acc_val, FILE * fout);
@@ -104,6 +105,14 @@ void CMSketch::Enhanced_Insert(cuc* str)
 		{
 			sketch[i][cid[i]] += min<<32;
 		}
+	}
+}
+
+void CMSketch::GetHashedValue(cuc *str, uint *counters)
+{
+	for(uint i = 0; i < d; i++)
+	{
+		counters[i] = hf->Str2Int(str,i) % w;
 	}
 }
 
