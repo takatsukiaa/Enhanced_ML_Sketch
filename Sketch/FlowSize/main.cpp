@@ -7,7 +7,7 @@
 #include <fstream>
 #include <string>
 #define MICE_threshold 100
-CMSketch *Sketch = new CMSketch(3, 9260);
+CMSketch *Sketch = new CMSketch(3, 11092);
 std::unordered_map<std::string, ull> actual_size;
 int main(){
 	std::string dat_path = "caida1.dat";
