@@ -45,13 +45,16 @@ int main(){
 	
 	//print all flows to file
 	//for each flows in "actual size" print counter to file, avoid repeated print
+	int number_of_flows = 0;
  	for (auto it = actual_size.begin(); it != actual_size.end(); ++it) 
 	{
         cuc* temp = reinterpret_cast<cuc*>(const_cast<char*>(it->first.c_str()));
 		int second = it->second;
 		Sketch->PrintCounterFile(temp, second, all_flows);
 		AAE += Sketch->CalculateAAE(temp,second);
+		number_of_flows++;
     }
+
 	printf("Total Packet Count: %u\n", packet_count);
 	printf("Total Flow Count: %lu\n", actual_size.size());
 	// //load parameter form pre-trained model
@@ -81,12 +84,12 @@ int main(){
 		// Sketch->PrintCounterFile(constData,actual_size[data],counters);
 	}
 	
-	AAE /= actual_size.size();
-	//aae_ml /= packet_count because qurey by each packet
-	aae_ml /= packet_count;
-	std::cout<<"AAE_ML: "<<aae_ml<<std::endl;
+	AAE /= number_of_flows;
+	//aae_ml /= packet_count because query by each packet
+	// aae_ml /= packet_count;
+	// std::cout<<"AAE_ML: "<<aae_ml<<std::endl;
 	std::cout<<"AAE: "<<AAE<<std::endl;
-	std::cout<<"ARE: "<<ARE<<std::endl;
+	// std::cout<<"ARE: "<<ARE<<std::endl;
 	
 	fclose(out);
 	fclose(counters);
