@@ -19,6 +19,7 @@ public:
 	float CalculateAAE_ML(cuc * str, uint acc_val, float query_val);
 	float CalculateARE(cuc * str, uint acc_val);
 	ull Enhanced_Query(cuc* str,int* feature_count);
+	void Enhanced_PrintCounterFile(cuc * str, uint acc_val, FILE * fout);
 private:
 	HashFunction *hf;
 	ull** sketch;
@@ -237,6 +238,40 @@ ull CMSketch::Enhanced_Query(cuc* str, int* feature_count)
     // Step 3: 返回最小值
     return min;
 }
+void CMSketch::Enhanced_PrintCounterFile(cuc* str, uint acc_val, FILE* fout) {
+    uint cid[3];
+    ull value;
+    int feature_count = 0;
+    //計算 Hash 值
+    for (uint i = 0; i < d; i++) {
+        cid[i] = hf->Str2Int(str, i) % w;
+    }
+	// 計算特徵數
+    for (uint i = 0; i < d; i++) {
+        if (ov_flags[i][cid[i]] == 1) {
+           feature_count += 1;
+        } else {
+           feature_count += 2;
+        }
+    }
+	fprintf(fout, "%d", feature_count);
+    //寫入檔案
+    fprintf(fout, " %u", acc_val); // 實際值
+    for (uint i = 0; i < d; i++) {
+        if (ov_flags[i][cid[i]] == 1) {
+            // 如果溢出，輸出 64 位值
+            value = sketch[i][cid[i]];
+            fprintf(fout, " %llu", value);
+        } else {
+            // 如果未溢出，輸出兩個 32 位值
+            uint low = sketch[i][cid[i]] & 0xFFFFFFFF;
+            uint high = (sketch[i][cid[i]] >> 32) & 0xFFFFFFFF;
+            fprintf(fout, " %u %u", low, high);
+        }
+    }
+    fprintf(fout, "\n"); 
+}
+
 
 void CMSketch::PrintCounterFile(cuc * str, uint acc_val, FILE * fout)
 {
