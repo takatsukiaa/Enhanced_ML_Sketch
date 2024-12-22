@@ -8,7 +8,7 @@
 #include <string>
 #define MICE_threshold 100
 CMSketch *Sketch = new CMSketch(3, 11092);
-std::unordered_map<std::string, ull> actual_size;
+std::unordered_map<std::string, uint> actual_size;
 int main(){
 	std::string dat_path = "equinix-chicago1.dat";
 	/*Insert your code here using the flowsize interface*/
@@ -50,7 +50,7 @@ int main(){
 	{
         cuc* temp = reinterpret_cast<cuc*>(const_cast<char*>(it->first.c_str()));
 		int second = it->second;
-		Sketch->PrintCounterFile(temp, second, all_flows);
+		Sketch->Enhanced_PrintCounterFile(temp, second, all_flows);
 		AAE += Sketch->CalculateAAE(temp,second);
 		number_of_flows++;
     }
@@ -58,8 +58,8 @@ int main(){
 	printf("Total Packet Count: %u\n", packet_count);
 	printf("Total Flow Count: %lu\n", actual_size.size());
 	// //load parameter form pre-trained model
-	cuc* path = (unsigned char*)"parameter.txt";
-	Sketch->LoadPara(path);
+	// cuc* path = (unsigned char*)"parameter.txt";
+	// Sketch->LoadPara(path);
 	
 	float aae_ml = 0;
 	//query by each packet
@@ -73,7 +73,7 @@ int main(){
 		uint query_val;
 		int fearure_count = 0;
 		// query_val = Sketch->Query(constData, FALSE);
-		query_val = Sketch->Enhanced_Query(constData,&fearure_count); 
+		// query_val = Sketch->Enhanced_Query(constData,&fearure_count); 
 		// if(query_val - a >MICE_threshold){
 		// 	fprintf(out,"Actual Size: %llu Query Value: %llu feature count: %d\n", a, query_val,fearure_count);
 		// 	Sketch->PrintCounterFile(constData, a, out);
@@ -92,5 +92,6 @@ int main(){
 	
 	fclose(out);
 	fclose(counters);
+	fclose(all_flows);
 	return 0;
 }

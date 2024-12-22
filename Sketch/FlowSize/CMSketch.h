@@ -96,7 +96,7 @@ void CMSketch::Enhanced_Insert(cuc* str)
 		{
 			min = sketch[i][cid[i]];
 		}
-		if(sketch[i][cid[i]] > USHRT_MAX)
+		if(sketch[i][cid[i]]>USHRT_MAX)
 		{
 			ov_flags[i][cid[i]] = 1;
 		}
@@ -105,43 +105,9 @@ void CMSketch::Enhanced_Insert(cuc* str)
 	{
 		if(ov_flags[i][cid[i]] == '\0')
 		{
-			sketch[i][cid[i]] += (min<<16);
+			sketch[i][cid[i]] += min<<16;
 		}
 	}
-}
-uint CMSketch::Enhanced_Query(cuc* str, int* feature_count)
-{
-    uint min = UINT_MAX;
-    uint cid[3];
-    
-    // Step 1: 計算每行的哈希索引
-    for (uint i = 0; i < d; i++) {
-        cid[i] = hf->Str2Int(str, i) % w;
-    }
-
-    // Step 2: 遍歷每一行，獲取計數器值
-    for (uint i = 0; i < d; i++) {
-        uint value;
-        
-        // 檢查溢出標誌
-        if (ov_flags[i][cid[i]] == 1) {
-            // 如果溢出，取整個 64 位值
-            value = sketch[i][cid[i]];
-			*feature_count +=1;
-        } else {
-            // 如果未溢出，僅取後 32 位值
-            value = sketch[i][cid[i]] & 0xFFFF;
-			*feature_count+=2;
-        }
-        
-        // 更新最小值
-        if (value < min) {
-            min = value;
-        }
-    }
-
-    // Step 3: 返回最小值
-    return min;
 }
 
 void CMSketch::GetHashedValue(cuc *str, uint *counters)
@@ -204,7 +170,40 @@ void CMSketch::PrintCounter(cuc* str, uint acc_val){
 		printf("\n");
 	}
 }
+uint CMSketch::Enhanced_Query(cuc* str, int* feature_count)
+{
+    uint min = UINT_MAX;
+    uint cid[3];
+    
+    // Step 1: 計算hash值
+    for (uint i = 0; i < d; i++) {
+        cid[i] = hf->Str2Int(str, i) % w;
+    }
 
+    // Step 2: 遍歷每一行，獲取計數器值
+    for (uint i = 0; i < d; i++) {
+        uint value;
+        
+        // 檢查溢出標誌
+        if (ov_flags[i][cid[i]] == 1) {
+            // 如果溢出，取整個 64 位值
+            value = sketch[i][cid[i]];
+			*feature_count +=1;
+        } else {
+            // 如果未溢出，僅取後 16 位值
+            value = sketch[i][cid[i]] & 0xFFFF;
+			*feature_count+=2;
+        }
+        
+        // 更新最小值
+        if (value < min) {
+            min = value;
+        }
+    }
+
+    // Step 3: 返回最小值
+    return min;
+}
 void CMSketch::Enhanced_PrintCounterFile(cuc* str, uint acc_val, FILE* fout) {
     uint cid[3];
     uint value;
@@ -223,17 +222,17 @@ void CMSketch::Enhanced_PrintCounterFile(cuc* str, uint acc_val, FILE* fout) {
     }
 	fprintf(fout, "%d", feature_count);
     //寫入檔案
-    fprintf(fout, " %u", acc_val); // 實際值
+    fprintf(fout, ",%u", acc_val); // 實際值
     for (uint i = 0; i < d; i++) {
         if (ov_flags[i][cid[i]] == 1) {
             // 如果溢出，輸出 64 位值
             value = sketch[i][cid[i]];
-            fprintf(fout, " %u", value);
+            fprintf(fout, ",%u", value);
         } else {
             // 如果未溢出，輸出兩個 32 位值
-            uint low = (sketch[i][cid[i]] & 0x0000FFFF) ;
-            uint high = (sketch[i][cid[i]] >> 16) & 0x0000FFFF;
-            fprintf(fout, " %u %u", low, high);
+            uint low = sketch[i][cid[i]] & 0xFFFF;
+            uint high = sketch[i][cid[i]] >> 16;
+            fprintf(fout, ",%u,%u", high, low);
         }
     }
     fprintf(fout, "\n"); 

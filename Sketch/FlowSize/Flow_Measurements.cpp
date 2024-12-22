@@ -12,7 +12,7 @@ std::unordered_map<std::string, ull> actual_size;
 int main(){
 	/*Insert your code here using the flowsize interface*/
 
-	std::ifstream file("caida1.dat",std::ios::binary);
+	std::ifstream file("equinix-chicago1.dat",std::ios::binary);
 	if(!file){
 		std::cout<<"error, file not found!\n";
 		return -1;
@@ -42,7 +42,7 @@ int main(){
         cuc* temp = reinterpret_cast<cuc*>(const_cast<char*>(it->first.c_str()));
         uint second = it->second;
         Sketch->GetHashedValue(temp, cid[i]);
-        fprintf(hash_values, "%u %u %u\n",cid[i][0],cid[i][1],cid[i][2]);
+        fprintf(hash_values, "%u,%u,%u\n",cid[i][0],cid[i][1],cid[i][2]);
         if(second >= THRESHOLD)
             elephant_AAE+=Sketch->CalculateAAE(temp,second);
         AAE+=Sketch->CalculateAAE(temp,second);
