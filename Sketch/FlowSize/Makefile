@@ -7,3 +7,6 @@ main : main.cpp $(HEADFILE)
 
 clean : 
 	rm main
+
+flows : Flow_Measurements.cpp $(HEADFILE)
+	$(CC) -o Flow_Measurements Flow_Measurements.cpp $(OPTION)
