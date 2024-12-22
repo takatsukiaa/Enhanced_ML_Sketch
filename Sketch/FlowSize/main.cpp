@@ -7,10 +7,10 @@
 #include <fstream>
 #include <string>
 #define MICE_threshold 100
-CMSketch *Sketch = new CMSketch(3, 1024);
+CMSketch *Sketch = new CMSketch(3, 9260);
 std::unordered_map<std::string, ull> actual_size;
 int main(){
-	std::string dat_path = "binary.dat";
+	std::string dat_path = "caida1.dat";
 	/*Insert your code here using the flowsize interface*/
 
 	std::ifstream file(dat_path,std::ios::binary);
@@ -77,6 +77,7 @@ int main(){
 			// Sketch->PrintCounterFile(constData, a, out);
 		}
 		aae_ml+=Sketch->CalculateAAE_ML(constData,a,query_val);
+		Sketch->Enhanced_PrintCounterFile(constData, a, counters);
 		// Sketch->PrintCounterFile(constData,actual_size[data],counters);
 	}
 	
