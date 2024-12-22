@@ -6,8 +6,8 @@
 // #include "PSACSketch.h"
 #include <fstream>
 #include <string>
-
-CMSketch *Sketch = new CMSketch(3, 9260);
+#define MICE_threshold 100
+CMSketch *Sketch = new CMSketch(3, 1024);
 std::unordered_map<std::string, ull> actual_size;
 int main(){
 	std::string dat_path = "binary.dat";
@@ -27,7 +27,8 @@ int main(){
 	{
 		std::string data(reinterpret_cast<char*>(buffer), file.gcount());
 		cuc* constData = buffer;
-		Sketch->Insert(constData);
+		// Sketch->Insert(constData);
+		Sketch->Enhanced_Insert(constData);
 		actual_size[data]++;
 		packet_count++;
 	}
@@ -52,8 +53,7 @@ int main(){
 		AAE += Sketch->CalculateAAE(temp,second);
     }
 	printf("Total Packet Count: %u\n", packet_count);
-	// fprintf(all_flows,"Total Packet Count: %u\n", packet_count);
-
+	printf("Total Flow Count: %lu\n", actual_size.size());
 	// //load parameter form pre-trained model
 	cuc* path = (unsigned char*)"parameter.txt";
 	Sketch->LoadPara(path);
@@ -68,8 +68,14 @@ int main(){
 		cuc* constData = buffer;
 		ull a = actual_size[data];
 		ull query_val;
-		query_val = Sketch->Query(constData, TRUE);
-		fprintf(out,"Actual Size: %llu Query Value: %llu\n", a, query_val);
+		int fearure_count = 0;
+		// query_val = Sketch->Query(constData, TRUE);
+		query_val = Sketch->Enhanced_Query(constData,&fearure_count); 
+		if(query_val -a >MICE_threshold){
+			fprintf(out,"Actual Size: %llu Query Value: %llu feature count: %d\n", a, query_val,fearure_count);
+			//PRINT COUNTER to file
+			// Sketch->PrintCounterFile(constData, a, out);
+		}
 		aae_ml+=Sketch->CalculateAAE_ML(constData,a,query_val);
 		// Sketch->PrintCounterFile(constData,actual_size[data],counters);
 	}
