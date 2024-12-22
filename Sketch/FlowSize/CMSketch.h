@@ -17,6 +17,7 @@ public:
 	float Predict(ull *t);
 	float CalculateAAE_ML(cuc * str, uint acc_val, float query_val);
 	float CalculateARE(cuc * str, uint acc_val);
+	ull Enhanced_Query(cuc* str,int* feature_count);
 private:
 	HashFunction *hf;
 	ull** sketch;
@@ -105,6 +106,40 @@ void CMSketch::Enhanced_Insert(cuc* str)
 			sketch[i][cid[i]] += min<<32;
 		}
 	}
+}
+ull CMSketch::Enhanced_Query(cuc* str, int* feature_count)
+{
+    ull min = ULLONG_MAX;
+    uint cid[3];
+    
+    // Step 1: 計算每行的哈希索引
+    for (uint i = 0; i < d; i++) {
+        cid[i] = hf->Str2Int(str, i) % w;
+    }
+
+    // Step 2: 遍歷每一行，獲取計數器值
+    for (uint i = 0; i < d; i++) {
+        ull value;
+        
+        // 檢查溢出標誌
+        if (ov_flags[i][cid[i]] == 1) {
+            // 如果溢出，取整個 64 位值
+            value = sketch[i][cid[i]];
+			*feature_count +=1;
+        } else {
+            // 如果未溢出，僅取後 32 位值
+            value = sketch[i][cid[i]] & 0xFFFFFFFF;
+			*feature_count+=2;
+        }
+        
+        // 更新最小值
+        if (value < min) {
+            min = value;
+        }
+    }
+
+    // Step 3: 返回最小值
+    return min;
 }
 
 ull CMSketch::Query(cuc *str, bool ml){
