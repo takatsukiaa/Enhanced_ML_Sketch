@@ -10,7 +10,7 @@
 CMSketch *Sketch = new CMSketch(3, 11092);
 std::unordered_map<std::string, ull> actual_size;
 int main(){
-	std::string dat_path = "caida1.dat";
+	std::string dat_path = "equinix-chicago1.dat";
 	/*Insert your code here using the flowsize interface*/
 
 	std::ifstream file(dat_path,std::ios::binary);
@@ -69,17 +69,16 @@ int main(){
 		
 		std::string data(reinterpret_cast<char*>(buffer), 13);
 		cuc* constData = buffer;
-		ull a = actual_size[data];
-		ull query_val;
+		uint a = actual_size[data];
+		uint query_val;
 		int fearure_count = 0;
-		// query_val = Sketch->Query(constData, TRUE);
+		// query_val = Sketch->Query(constData, FALSE);
 		query_val = Sketch->Enhanced_Query(constData,&fearure_count); 
-		if(query_val -a >MICE_threshold){
-			fprintf(out,"Actual Size: %llu Query Value: %llu feature count: %d\n", a, query_val,fearure_count);
-			//PRINT COUNTER to file
-			// Sketch->PrintCounterFile(constData, a, out);
-		}
-		aae_ml+=Sketch->CalculateAAE_ML(constData,a,query_val);
+		// if(query_val - a >MICE_threshold){
+		// 	fprintf(out,"Actual Size: %llu Query Value: %llu feature count: %d\n", a, query_val,fearure_count);
+		// 	Sketch->PrintCounterFile(constData, a, out);
+		// }
+		// aae_ml+=Sketch->CalculateAAE_ML(constData,a,query_val);
 		Sketch->Enhanced_PrintCounterFile(constData, a, counters);
 		// Sketch->PrintCounterFile(constData,actual_size[data],counters);
 	}

@@ -10,43 +10,43 @@ public:
 	void Insert(cuc *str);
 	void Enhanced_Insert(cuc* str);
 	void GetHashedValue(cuc *str, uint *counters);
-	ull Query(cuc *str, bool ml = FALSE);
+	uint Query(cuc *str, bool ml = FALSE);
 	void PrintCounter(cuc* str, uint acc_val);
 	void PrintCounterFile(cuc * str, uint acc_val, FILE * fout);
 	float CalculateAAE(cuc * str, uint acc_val);
 	void LoadPara(cuc *path = CMPATH);
-	float Predict(ull *t);
+	float Predict(uint *t);
 	float CalculateAAE_ML(cuc * str, uint acc_val, float query_val);
 	float CalculateARE(cuc * str, uint acc_val);
-	ull Enhanced_Query(cuc* str,int* feature_count);
+	uint Enhanced_Query(cuc* str,int* feature_count);
 	void Enhanced_PrintCounterFile(cuc * str, uint acc_val, FILE * fout);
 private:
 	HashFunction *hf;
-	ull** sketch;
+	uint** sketch;
 	float* para;
 	float* mean;
 	float* scale;
 	uint d;
 	uint w;
-	ull *t;
+	uint *t;
 	uchar** ov_flags;
 };
 
 
 CMSketch::CMSketch(uint d, uint w):d(d), w(w){
-	sketch = new ull*[d];
+	sketch = new uint*[d];
 	ov_flags = new uchar*[d];
 	for(uint i = 0; i < d; ++i){
-		sketch[i] = new ull[w];
+		sketch[i] = new uint[w];
 		ov_flags[i] = new uchar[w];
-		memset(sketch[i], 0, w * sizeof(ull));
+		memset(sketch[i], 0, w * sizeof(uint));
 		memset(ov_flags[i], 0, w * sizeof(uchar));
 	}
 	hf = new HashFunction();
 	para = new float[d];
 	mean = new float[d];
 	scale = new float[d];
-	t = new ull[d];
+	t = new uint[d];
 }
 
 CMSketch::~CMSketch(){
@@ -70,7 +70,7 @@ void CMSketch::Insert(cuc *str){
 }
 void CMSketch::Enhanced_Insert(cuc* str)
 {
-	ull min = 0;
+	uint min = 0;
 	uint cid[3];
 	for(uint i=0; i < d; i++)
 	{
@@ -85,7 +85,7 @@ void CMSketch::Enhanced_Insert(cuc* str)
 	{
 		if(ov_flags[i][cid[i]] == '\0')
 		{
-			sketch[i][cid[i]] = sketch[i][cid[i]]<<32>>32;
+			sketch[i][cid[i]] = sketch[i][cid[i]]<<16>>16;
 		}
 		++sketch[i][cid[i]];
 		if(i == 0)
@@ -96,7 +96,7 @@ void CMSketch::Enhanced_Insert(cuc* str)
 		{
 			min = sketch[i][cid[i]];
 		}
-		if(sketch[i][cid[i]]>UINT_MAX)
+		if(sketch[i][cid[i]] > USHRT_MAX)
 		{
 			ov_flags[i][cid[i]] = 1;
 		}
@@ -105,13 +105,13 @@ void CMSketch::Enhanced_Insert(cuc* str)
 	{
 		if(ov_flags[i][cid[i]] == '\0')
 		{
-			sketch[i][cid[i]] += min<<32;
+			sketch[i][cid[i]] += (min<<16);
 		}
 	}
 }
-ull CMSketch::Enhanced_Query(cuc* str, int* feature_count)
+uint CMSketch::Enhanced_Query(cuc* str, int* feature_count)
 {
-    ull min = ULLONG_MAX;
+    uint min = UINT_MAX;
     uint cid[3];
     
     // Step 1: 計算每行的哈希索引
@@ -121,7 +121,7 @@ ull CMSketch::Enhanced_Query(cuc* str, int* feature_count)
 
     // Step 2: 遍歷每一行，獲取計數器值
     for (uint i = 0; i < d; i++) {
-        ull value;
+        uint value;
         
         // 檢查溢出標誌
         if (ov_flags[i][cid[i]] == 1) {
@@ -130,7 +130,7 @@ ull CMSketch::Enhanced_Query(cuc* str, int* feature_count)
 			*feature_count +=1;
         } else {
             // 如果未溢出，僅取後 32 位值
-            value = sketch[i][cid[i]] & 0xFFFFFFFF;
+            value = sketch[i][cid[i]] & 0xFFFF;
 			*feature_count+=2;
         }
         
@@ -152,10 +152,10 @@ void CMSketch::GetHashedValue(cuc *str, uint *counters)
 	}
 }
 
-ull CMSketch::Query(cuc *str, bool ml){
+uint CMSketch::Query(cuc *str, bool ml){
 	memset(t, 0, sizeof(t)*3);
 
-	ull Min;
+	uint Min;
 	for(uint i = 0; i < d; ++i){
 		uint cid = hf->Str2Int(str, i)%w;
 		t[i] = sketch[i][cid];
@@ -168,7 +168,7 @@ ull CMSketch::Query(cuc *str, bool ml){
 	else {
 		printf("using ml:\n");
 		std::sort(t, t+d);
-		ull result = Predict(t);
+		uint result = Predict(t);
 		//if you want a float;
 		if(t[3] - t[1] <= THRESH && result>0 && result <= t[0])
 		{
@@ -199,48 +199,15 @@ void CMSketch::PrintCounter(cuc* str, uint acc_val){
 		printf("%u", acc_val);
 		printf("Counter Values:");
 		for(uint i = 0; i < d; ++i){
-			printf(" %llu", t[i]);
+			printf(" %u", t[i]);
 		}
 		printf("\n");
 	}
 }
-ull CMSketch::Enhanced_Query(cuc* str, int* feature_count)
-{
-    ull min = ULLONG_MAX;
-    uint cid[3];
-    
-    // Step 1: 計算hash值
-    for (uint i = 0; i < d; i++) {
-        cid[i] = hf->Str2Int(str, i) % w;
-    }
 
-    // Step 2: 遍歷每一行，獲取計數器值
-    for (uint i = 0; i < d; i++) {
-        ull value;
-        
-        // 檢查溢出標誌
-        if (ov_flags[i][cid[i]] == 1) {
-            // 如果溢出，取整個 64 位值
-            value = sketch[i][cid[i]];
-			*feature_count +=1;
-        } else {
-            // 如果未溢出，僅取後 32 位值
-            value = sketch[i][cid[i]] & 0xFFFFFFFF;
-			*feature_count+=2;
-        }
-        
-        // 更新最小值
-        if (value < min) {
-            min = value;
-        }
-    }
-
-    // Step 3: 返回最小值
-    return min;
-}
 void CMSketch::Enhanced_PrintCounterFile(cuc* str, uint acc_val, FILE* fout) {
     uint cid[3];
-    ull value;
+    uint value;
     int feature_count = 0;
     //計算 Hash 值
     for (uint i = 0; i < d; i++) {
@@ -261,11 +228,11 @@ void CMSketch::Enhanced_PrintCounterFile(cuc* str, uint acc_val, FILE* fout) {
         if (ov_flags[i][cid[i]] == 1) {
             // 如果溢出，輸出 64 位值
             value = sketch[i][cid[i]];
-            fprintf(fout, " %llu", value);
+            fprintf(fout, " %u", value);
         } else {
             // 如果未溢出，輸出兩個 32 位值
-            uint low = sketch[i][cid[i]] & 0xFFFFFFFF;
-            uint high = (sketch[i][cid[i]] >> 32) & 0xFFFFFFFF;
+            uint low = (sketch[i][cid[i]] & 0x0000FFFF) ;
+            uint high = (sketch[i][cid[i]] >> 16) & 0x0000FFFF;
             fprintf(fout, " %u %u", low, high);
         }
     }
@@ -284,9 +251,9 @@ void CMSketch::PrintCounterFile(cuc * str, uint acc_val, FILE * fout)
 	fprintf(fout, "%u ", acc_val);
 	// fprintf(fout, "Counter Values:");
 	for(uint i = 0; i < d-1; ++i){
-		fprintf(fout, "%llu ", t[i]);
+		fprintf(fout, "%u ", t[i]);
 	}
-	fprintf(fout,"%llu",t[d-1]);
+	fprintf(fout,"%u",t[d-1]);
 	fprintf(fout, "\n");
 }
 
@@ -327,7 +294,7 @@ float CMSketch::CalculateARE(cuc* str, uint acc_val)
 	std::sort(t, t + d);
 	return abs(((float)t[0] - acc_val)/acc_val);
 }
-float CMSketch::Predict(ull *t){
+float CMSketch::Predict(uint *t){
 	float res = 0;
 	for(uint i = 0; i < d; ++i){
 		res += para[i]*((t[i]-mean[i])/scale[i]);

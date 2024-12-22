@@ -62,10 +62,10 @@ struct HashFunction{
 
 struct Sketch{
 	virtual void Insert(cuc *str) = 0;
-	virtual ull Query(cuc *str, bool ml = FALSE) = 0;
+	virtual uint Query(cuc *str, bool ml = FALSE) = 0;
 	virtual void PrintCounter(cuc *str, uint acc_val) = 0;
     virtual void LoadPara(cuc *str) = 0;
-    bool need_analyze(ull *arr, int num) {
+    bool need_analyze(uint *arr, int num) {
         std::sort(arr, arr + num);
 //        return true;
 //        for (int i = 0; i < num - 1; ++i) {
