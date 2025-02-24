@@ -7,7 +7,7 @@
 #include <fstream>
 #include <string>
 #define MICE_threshold 100
-CMSketch *Sketch = new CMSketch(3, 11092);
+CMSketch *Sketch = new CMSketch(4,11092);
 std::unordered_map<std::string, uint> actual_size;
 int main(){
 	std::string dat_path = "equinix-chicago1_20mil.dat";
@@ -79,8 +79,8 @@ int main(){
 		// 	Sketch->PrintCounterFile(constData, a, out);
 		// }
 		// aae_ml+=Sketch->CalculateAAE_ML(constData,a,query_val);
-		// Sketch->Enhanced_PrintCounterFile(constData, a, counters);
-		Sketch->PrintCounterFile(constData,actual_size[data],counters);
+		Sketch->Enhanced_PrintCounterFile(constData, a, counters);
+		// Sketch->PrintCounterFile(constData,actual_size[data],counters);
 	}
 	
 	AAE /= number_of_flows;

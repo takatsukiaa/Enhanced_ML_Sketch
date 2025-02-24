@@ -71,7 +71,7 @@ void CMSketch::Insert(cuc *str){
 void CMSketch::Enhanced_Insert(cuc* str)
 {
 	uint min = 0;
-	uint cid[3];
+	uint cid[4];
 	for(uint i=0; i < d; i++)
 	{
 		cid[i] = hf->Str2Int(str, i) % w;
@@ -83,16 +83,16 @@ void CMSketch::Enhanced_Insert(cuc* str)
 	min = sketch[0][cid[0]];
 	for(uint i = 0; i < d; i++)
 	{
-		if(ov_flags[i][cid[i]] == '\0')
+		if(ov_flags[i][cid[i]] == 0)
 		{
-			sketch[i][cid[i]] = sketch[i][cid[i]]<<23>>23;
+			sketch[i][cid[i]] = sketch[i][cid[i]]<<22>>22;
 		}
 		++sketch[i][cid[i]];
 		if(sketch[i][cid[i]] < min || sketch[i][cid[i]] == min)
 		{
 			min = sketch[i][cid[i]];
 		}
-		if(sketch[i][cid[i]]>511 && ov_flags[i][cid[i]] == 0)
+		if(sketch[i][cid[i]]>1023 && ov_flags[i][cid[i]] == 0)
 		{
 			ov_flags[i][cid[i]] = 1;
 		}
@@ -101,7 +101,7 @@ void CMSketch::Enhanced_Insert(cuc* str)
 	{
 		if(ov_flags[i][cid[i]] == '\0')
 		{
-			sketch[i][cid[i]] += min<<9;
+			sketch[i][cid[i]] += min<<10;
 		}
 	}
 }
@@ -182,12 +182,12 @@ uint CMSketch::Enhanced_Query(cuc* str, int* feature_count)
         
         // 檢查溢出標誌
         if (ov_flags[i][cid[i]] == 1) {
-            // 如果溢出，取整個 64 位值
+            // 如果溢出，取整個 32 位值
             value = sketch[i][cid[i]];
 			*feature_count +=1;
         } else {
-            // 如果未溢出，僅取後 16 位值
-            value = sketch[i][cid[i]] & 0xFFFF;
+            // 如果未溢出，僅取後 10 位值
+            value = sketch[i][cid[i]] & 1023;
 			*feature_count+=2;
         }
         
@@ -201,7 +201,7 @@ uint CMSketch::Enhanced_Query(cuc* str, int* feature_count)
     return min;
 }
 void CMSketch::Enhanced_PrintCounterFile(cuc* str, uint acc_val, FILE* fout) {
-    uint cid[3];
+    uint cid[4];
     uint value;
     int feature_count = 0;
     //計算 Hash 值
@@ -218,17 +218,17 @@ void CMSketch::Enhanced_PrintCounterFile(cuc* str, uint acc_val, FILE* fout) {
     }
 	fprintf(fout, "%d", feature_count);
     //寫入檔案
-    fprintf(fout, ",%u", acc_val); // 實際值
+    fprintf(fout, " %u", acc_val); // 實際值
     for (uint i = 0; i < d; i++) {
         if (ov_flags[i][cid[i]] == 1) {
-            // 如果溢出，輸出 64 位值
+            // 如果溢出，輸出 32 位值
             value = sketch[i][cid[i]];
-            fprintf(fout, ",%u", value);
+            fprintf(fout, " %u", value);
         } else {
-            // 如果未溢出，輸出兩個 32 位值
-            uint low = sketch[i][cid[i]] & 0xFFFF;
-            uint high = sketch[i][cid[i]] >> 16;
-            fprintf(fout, ",%u,%u", high, low);
+            // 如果未溢出，輸出23位值 and 10-bit value
+            uint low = sketch[i][cid[i]] & 1023;
+            uint high = sketch[i][cid[i]] >> 10;
+            fprintf(fout, " %u %u", high, low);
         }
     }
     fprintf(fout, "\n"); 
