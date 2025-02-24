@@ -5,8 +5,8 @@
 // #include "PSketch.h"
 // #include "PSACSketch.h"
 #include <fstream>
-#define THRESHOLD 100
-CMSketch *Sketch = new CMSketch(3, 9260);
+#define THRESHOLD 2260
+CMSketch *Sketch = new CMSketch(3, 11092);
 std::unordered_map<std::string, ull> actual_size;
 
 int main(){
@@ -30,8 +30,13 @@ int main(){
 	}
     // FILE* collisions;
     FILE* hash_values;
+    int size = actual_size.size()+1;
     hash_values = fopen("hash_values.txt","w");
-    uint cid[92589][3];
+    uint* cid[size];
+    for(int i = 0; i<size; i++)
+    {
+        cid[i] = (uint*)malloc(sizeof(uint) * 3);
+    }
     // collisions = fopen("collisions.txt","w+");
     int i = 0;
     float AAE = 0;

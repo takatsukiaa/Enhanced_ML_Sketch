@@ -80,23 +80,19 @@ void CMSketch::Enhanced_Insert(cuc* str)
 			return;
 		}
 	}
-	
+	min = sketch[0][cid[0]];
 	for(uint i = 0; i < d; i++)
 	{
 		if(ov_flags[i][cid[i]] == '\0')
 		{
-			sketch[i][cid[i]] = sketch[i][cid[i]]<<16>>16;
+			sketch[i][cid[i]] = sketch[i][cid[i]]<<23>>23;
 		}
 		++sketch[i][cid[i]];
-		if(i == 0)
-		{
-			min = sketch[i][cid[i]];
-		}
 		if(sketch[i][cid[i]] < min || sketch[i][cid[i]] == min)
 		{
 			min = sketch[i][cid[i]];
 		}
-		if(sketch[i][cid[i]]>USHRT_MAX)
+		if(sketch[i][cid[i]]>511 && ov_flags[i][cid[i]] == 0)
 		{
 			ov_flags[i][cid[i]] = 1;
 		}
@@ -105,7 +101,7 @@ void CMSketch::Enhanced_Insert(cuc* str)
 	{
 		if(ov_flags[i][cid[i]] == '\0')
 		{
-			sketch[i][cid[i]] += min<<16;
+			sketch[i][cid[i]] += min<<9;
 		}
 	}
 }
