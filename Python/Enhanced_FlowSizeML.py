@@ -1,4 +1,4 @@
-import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import Ridge
@@ -10,9 +10,8 @@ from sklearn.pipeline import make_pipeline
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 from xgboost import XGBRegressor
+from sklearn.model_selection import cross_val_score
 
-import os
-# 讀取檔案
 
 with open("/home/takatsukiaa/ML-Sketch/Python/output_4.csv", "r") as f:
     data4 = [list(map(int, line.strip().split())) for line in f if line.strip()]
@@ -56,7 +55,7 @@ df7 = pd.DataFrame(data7, columns=columns7)
 
 # For feature_count == 8
 columns8 = ['feature_count', 'y'] + [f'feature_{i}' for i in range(1, len(data8[0]) - 1)]
-df8 = pd.DataFrame(data7, columns=columns7)
+df8 = pd.DataFrame(data8, columns=columns8)
 # # df8.to_csv('convert8.csv', index=False)
 
 data_by_feature = {
@@ -84,10 +83,11 @@ for feature_count, df in data_by_feature.items():
     y = df['y']
     
     # 分割訓練集與測試集
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    if len(df.index) > 1000:
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     
     # Train Gradient Boosting model
-    # model_gb = XGBRegressor(n_estimators=100, learning_rate=0.1, max_depth=7)
+    # model_gb = XGBRegressor(n_estimators=100, learning_rate=0.1, max_depth=9)
     # model_gb.fit(X_train,y_train)
     # y_pred_gb = model_gb.predict(X_test)
     # mse_gb = mean_squared_error(y_test,y_pred_gb)
@@ -99,47 +99,76 @@ for feature_count, df in data_by_feature.items():
 
     # Train random forest model
     model_rf = RandomForestRegressor(n_estimators=100, max_depth=9, random_state=42)
-    model_rf.fit(X_train,y_train)
-    y_pred_tree = model_rf.predict(X_test)
-    mse_tree = mean_squared_error(y_test,y_pred_tree)
-    r2_tree = r2_score(y_test,y_pred_tree)
-    print("Random Forest:")
-    print(f"Feature Count {feature_count}")
-    print(f"Mean Squared Error: {mse_tree:.4f}")
-    print(f"R² Score: {r2_tree:.4f}")
+    if len(df.index) > 1000:
+        model_rf.fit(X_train,y_train)
+        y_pred_rf = model_rf.predict(X_test)
+        mse_rf = mean_squared_error(y_test,y_pred_rf)
+        r2_rf = r2_score(y_test,y_pred_rf)
+        print("Random Forest:")
+        print(f"Feature Count {feature_count}")
+        print(f"Mean Squared Error: {mse_rf:.4f}")
+        print(f"R² Score: {r2_rf:.4f}")
+    else:
+        r2_rf = cross_val_score(model_rf, X, y, cv=5, scoring="r2") # 5-Fold Cross-Validation
+        mse_rf =  cross_val_score(model_rf, X, y, cv=5, scoring="neg_mean_squared_error")
+        mse_rf = -mse_rf
+        print("Random Forest:")
+        print(f"Feature Count {feature_count}")
+        print(f"Mean Squared Error: {np.mean(mse_rf):.4f}")
+        print(f"R² Score: {r2_rf.mean():.4f}")
+
     
     # Train decision tree model
-    # model_tree = DecisionTreeRegressor(max_depth=7)
-    # model_tree.fit(X_train,y_train)
-    # y_pred_tree = model_tree.predict(X_test)
-    # mse_tree = mean_squared_error(y_test,y_pred_tree)
-    # r2_tree = r2_score(y_test,y_pred_tree)
-    # print("Decision Tree:")
-    # print(f"Feature Count {feature_count}")
-    # print(f"Mean Squared Error: {mse_tree:.4f}")
-    # print(f"R² Score: {r2_tree:.4f}")
+    # if len(df.index) > 1000:
+    #     model_tree = DecisionTreeRegressor(max_depth=9)
+    #     model_tree.fit(X_train,y_train)
+    #     y_pred_tree = model_tree.predict(X_test)
+    #     mse_tree = mean_squared_error(y_test,y_pred_tree)
+    #     r2_tree = r2_score(y_test,y_pred_tree)
+    #     print("Decision Tree:")
+    #     print(f"Feature Count {feature_count}")
+    #     print(f"Mean Squared Error: {mse_tree:.4f}")
+    #     print(f"R² Score: {r2_tree:.4f}")
+    # else:
+    #     model_tree = DecisionTreeRegressor(max_depth=9)
+    #     r2_tree = cross_val_score(model_tree, X, y, cv=5, scoring="r2")
+    #     mse_tree = cross_val_score(model_tree, X, y, cv=5, scoring="neg_mean_squared_error")
+    #     mse_tree = -mse_tree
+    #     print("Decision Tree:")
+    #     print(f"Feature Count {feature_count}")
+    #     print(f"Mean Squared Error: {np.mean(mse_tree):.4f}")
+    #     print(f"R² Score: {r2_tree.mean():.4f}")
     
 
     
     # Train the polynomial model
     # model_poly = make_pipeline(PolynomialFeatures(degree), LinearRegression())
-    # model_poly.fit(X_train, y_train)
-    # y_pred_poly = model_poly.predict(X_test)
-    # mse_poly = mean_squared_error(y_test,y_pred_poly)
-    # r2_poly = r2_score(y_test,y_pred_poly)
-    
-    # print("Poly:")
-    # print(f"Feature Count {feature_count}")
-    # print(f"Mean Squared Error: {mse_poly:.4f}")
-    # print(f"R² Score: {r2_poly:.4f}")
+    # if len(df.index) > 1000:
+    #     model_poly.fit(X_train, y_train)
+    #     y_pred_poly = model_poly.predict(X_test)
+    #     mse_poly = mean_squared_error(y_test,y_pred_poly)
+    #     r2_poly = r2_score(y_test,y_pred_poly)
+    #     print("Poly:")
+    #     print(f"Feature Count {feature_count}")
+    #     print(f"Mean Squared Error: {mse_poly:.4f}")
+    #     print(f"R² Score: {r2_poly:.4f}")
+    # else:
+    #     r2_poly = cross_val_score(model_poly, X, y, cv=5, scoring="r2")
+    #     mse_poly = cross_val_score(model_poly, X, y, cv=5, scoring="neg_mean_squared_error")
+    #     mse_poly = -mse_poly
+    #     print("Poly:")
+    #     print(f"Feature Count {feature_count}")
+    #     print(f"Mean Squared Error: {np.mean(mse_poly):.4f}")
+    #     print(f"R² Score: {r2_poly.mean():.4f}")
+
     
     # Scale the data
     # scaler = StandardScaler()
     # X_train_scaled = scaler.fit_transform(X_train)
     # X_test_scaled = scaler.transform(X_test)
 
-    # Train the Ridge Model
-    # model = Ridge(alpha=1.0)  # Set regularization strength (α)
+    # # Train the Ridge Model
+    # model = Ridge(alpha=1)  # Set regularization strength (α)
     # models[feature_count] = model
     # model.fit(X_train_scaled, y_train)
 
@@ -152,5 +181,25 @@ for feature_count, df in data_by_feature.items():
     # print(f"Feature Count {feature_count}")
     # print(f"Mean Squared Error: {mse_ridge:.4f}")
     # print(f"R² Score: {r2_ridge:.4f}")
+
+    # Training the Linear Regression model
+    # model_linear = LinearRegression()
+    # if len(df.index) > 1000:
+    #     model_linear.fit(X_train,y_train)
+    #     y_pred_linear = model_linear.predict(X_test)
+    #     mse_linear = mean_squared_error(y_test,y_pred_linear)
+    #     r2_linear = r2_score(y_test,y_pred_linear)
+    #     print("Linear Regression:")
+    #     print(f"Feature Count {feature_count}")
+    #     print(f"Mean Squared Error: {mse_linear:.4f}")
+    #     print(f"R² Score: {r2_linear:.4f}")
+    # else:
+    #     r2_linear = cross_val_score(model_linear, X, y, cv=5, scoring="r2")
+    #     mse_linear = cross_val_score(model_linear, X, y, cv=5, scoring="neg_mean_squared_error")
+    #     mse_linear = -mse_linear
+    #     print("Linear Regression:")
+    #     print(f"Feature Count {feature_count}")
+    #     print(f"Mean Squared Error: {np.mean(mse_linear):.4f}")
+    #     print(f"R² Score: {r2_linear.mean():.4f}")
 
 
