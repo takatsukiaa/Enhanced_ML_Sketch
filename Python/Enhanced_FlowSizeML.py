@@ -4,29 +4,46 @@ from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import Ridge
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error,r2_score
+from sklearn.metrics import mean_squared_error,r2_score, mean_absolute_error
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import make_pipeline
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 from xgboost import XGBRegressor
 from sklearn.model_selection import cross_val_score
+from sklearn.metrics import confusion_matrix
+from sklearn.utils.validation import check_is_fitted
 
 
-with open("/home/takatsukiaa/ML-Sketch/Python/output_4.csv", "r") as f:
+with open("/home/takatsukiaa/ML-Sketch/Python/equinix-chicago1_output_4.csv", "r") as f:
     data4 = [list(map(int, line.strip().split())) for line in f if line.strip()]
 
-with open("/home/takatsukiaa/ML-Sketch/Python/output_5.csv", "r") as f:
+with open("/home/takatsukiaa/ML-Sketch/Python/equinix-chicago1_output_5.csv", "r") as f:
     data5 = [list(map(int, line.strip().split())) for line in f if line.strip()]
 
-with open("/home/takatsukiaa/ML-Sketch/Python/output_6.csv", "r") as f:
+with open("/home/takatsukiaa/ML-Sketch/Python/equinix-chicago1_output_6.csv", "r") as f:
     data6 = [list(map(int, line.strip().split())) for line in f if line.strip()]
 
-with open("/home/takatsukiaa/ML-Sketch/Python/output_7.csv", "r") as f:
+with open("/home/takatsukiaa/ML-Sketch/Python/equinix-chicago1_output_7.csv", "r") as f:
     data7 = [list(map(int, line.strip().split())) for line in f if line.strip()]
 
-with open("/home/takatsukiaa/ML-Sketch/Python/output_8.csv", "r") as f:
+with open("/home/takatsukiaa/ML-Sketch/Python/equinix-chicago1_output_8.csv", "r") as f:
     data8 = [list(map(int, line.strip().split())) for line in f if line.strip()]
+
+# with open("/home/takatsukiaa/ML-Sketch/Python/equinix-chicago2_output_4.csv", "r") as f:
+#     test_data4 = [list(map(int, line.strip().split())) for line in f if line.strip()]
+
+# with open("/home/takatsukiaa/ML-Sketch/Python/equinix-chicago2_output_5.csv", "r") as f:
+#     test_data5 = [list(map(int, line.strip().split())) for line in f if line.strip()]
+
+# with open("/home/takatsukiaa/ML-Sketch/Python/equinix-chicago2_output_6.csv", "r") as f:
+#     test_data6 = [list(map(int, line.strip().split())) for line in f if line.strip()]
+
+# with open("/home/takatsukiaa/ML-Sketch/Python/equinix-chicago2_output_7.csv", "r") as f:
+#     test_data7 = [list(map(int, line.strip().split())) for line in f if line.strip()]
+
+# with open("/home/takatsukiaa/ML-Sketch/Python/equinix-chicago2_output_8.csv", "r") as f:
+#     test_data8 = [list(map(int, line.strip().split())) for line in f if line.strip()]
 
 # 轉換為 DataFrame
 
@@ -35,28 +52,36 @@ with open("/home/takatsukiaa/ML-Sketch/Python/output_8.csv", "r") as f:
 columns4 = ['feature_count', 'y'] + [f'feature_{i}' for i in range(1, len(data4[0]) - 1)]
 df4 = pd.DataFrame(data4, columns=columns4)
 # df4.to_csv('convert4.csv', index=False)
-
+# test_columns4 = ['feature_count', 'y'] + [f'feature_{i}' for i in range(1, len(test_data4[0]) - 1)]
+# test_df4 = pd.DataFrame(test_data4, columns=test_columns4)
 
 # For feature_count == 5
 columns5 = ['feature_count', 'y'] + [f'feature_{i}' for i in range(1, len(data5[0]) - 1)]
 df5 = pd.DataFrame(data5, columns=columns5)
 # df5.to_csv('convert5.csv', index=False)
-
+# test_columns5 = ['feature_count', 'y'] + [f'feature_{i}' for i in range(1, len(test_data5[0]) - 1)]
+# test_df5 =  pd.DataFrame(test_data5, columns=test_columns5)
 
 # For feature_count == 6
 columns6 = ['feature_count', 'y'] + [f'feature_{i}' for i in range(1, len(data6[0]) - 1)]
 df6 = pd.DataFrame(data6, columns=columns6)  # corrected: use data6
 # df6.to_csv('convert6.csv', index=False)
+# test_columns6 = ['feature_count', 'y'] + [f'feature_{i}' for i in range(1, len(test_data6[0]) - 1)]
+# test_df6 = pd.DataFrame(test_data6, columns=test_columns6)
 
 # For feature_count == 7
 columns7 = ['feature_count', 'y'] + [f'feature_{i}' for i in range(1, len(data7[0]) - 1)]
 df7 = pd.DataFrame(data7, columns=columns7)
 # df7.to_csv('convert7.csv', index=False)
+# test_columns7 = ['feature_count', 'y'] + [f'feature_{i}' for i in range(1, len(test_data7[0]) - 1)]
+# test_df7 = pd.DataFrame(test_data7, columns=test_columns7)
 
 # For feature_count == 8
 columns8 = ['feature_count', 'y'] + [f'feature_{i}' for i in range(1, len(data8[0]) - 1)]
 df8 = pd.DataFrame(data8, columns=columns8)
-# # df8.to_csv('convert8.csv', index=False)
+# df8.to_csv('convert8.csv', index=False)
+# test_columns8 = ['feature_count', 'y'] + [f'feature_{i}' for i in range(1, len(test_data8[0]) - 1)]
+# test_df8 = pd.DataFrame(test_data8, columns=test_columns8)
 
 data_by_feature = {
     4: df4,
@@ -65,6 +90,14 @@ data_by_feature = {
     7: df7,
     8: df8
 }
+
+# test_data_by_feature = {
+#     4: test_df4,
+#     5: test_df5,
+#     6: test_df6,
+#     7: test_df7,
+#     8: test_df8
+# }
 
 degree = 2
 models = {}   # Dictionary to hold models, keyed by feature count
@@ -75,7 +108,7 @@ results_poly = {}
 
 models_tree = {}
 results_tree = {}
-
+print("Random Forest:")
 for feature_count, df in data_by_feature.items():
     # Assume df has columns: ['feature_count', 'y', 'feature_1', 'feature_2', ...]
     # Use all columns except for 'feature_count' and 'y' as predictors.
@@ -85,7 +118,7 @@ for feature_count, df in data_by_feature.items():
     # 分割訓練集與測試集
     if len(df.index) > 1000:
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    
+
     # Train Gradient Boosting model
     # model_gb = XGBRegressor(n_estimators=100, learning_rate=0.1, max_depth=9)
     # model_gb.fit(X_train,y_train)
@@ -98,23 +131,24 @@ for feature_count, df in data_by_feature.items():
     # print(f"R² Score: {r2_tree:.4f}")
 
     # Train random forest model
-    model_rf = RandomForestRegressor(n_estimators=100, max_depth=9, random_state=42)
+
+    model_rf = RandomForestRegressor(n_estimators=55, max_depth=9, random_state=42)
+    models[feature_count] = model_rf
     if len(df.index) > 1000:
         model_rf.fit(X_train,y_train)
         y_pred_rf = model_rf.predict(X_test)
-        mse_rf = mean_squared_error(y_test,y_pred_rf)
+        # mse_rf = mean_squared_error(y_test,y_pred_rf)
         r2_rf = r2_score(y_test,y_pred_rf)
-        print("Random Forest:")
+        mae_rf = mean_absolute_error(y_test, y_pred_rf)
         print(f"Feature Count {feature_count}")
-        print(f"Mean Squared Error: {mse_rf:.4f}")
+        print(f"Mean Absolute Error: {mae_rf:.4f}" )
         print(f"R² Score: {r2_rf:.4f}")
     else:
         r2_rf = cross_val_score(model_rf, X, y, cv=5, scoring="r2") # 5-Fold Cross-Validation
-        mse_rf =  cross_val_score(model_rf, X, y, cv=5, scoring="neg_mean_squared_error")
-        mse_rf = -mse_rf
-        print("Random Forest:")
+        mae_rf = cross_val_score(model_rf, X, y, cv=5, scoring="neg_mean_absolute_error")
+        mae_rf = -mae_rf
         print(f"Feature Count {feature_count}")
-        print(f"Mean Squared Error: {np.mean(mse_rf):.4f}")
+        print(f"Mean Absolute Error: {np.mean(mae_rf):.4f}")
         print(f"R² Score: {r2_rf.mean():.4f}")
 
     
@@ -123,20 +157,20 @@ for feature_count, df in data_by_feature.items():
     #     model_tree = DecisionTreeRegressor(max_depth=9)
     #     model_tree.fit(X_train,y_train)
     #     y_pred_tree = model_tree.predict(X_test)
-    #     mse_tree = mean_squared_error(y_test,y_pred_tree)
+    #     mae_tree = mean_absolute_error(y_test, y_pred_tree)
     #     r2_tree = r2_score(y_test,y_pred_tree)
     #     print("Decision Tree:")
     #     print(f"Feature Count {feature_count}")
-    #     print(f"Mean Squared Error: {mse_tree:.4f}")
+    #     print(f"Mean Absolute Error: {mae_tree:.4f}")
     #     print(f"R² Score: {r2_tree:.4f}")
     # else:
     #     model_tree = DecisionTreeRegressor(max_depth=9)
     #     r2_tree = cross_val_score(model_tree, X, y, cv=5, scoring="r2")
-    #     mse_tree = cross_val_score(model_tree, X, y, cv=5, scoring="neg_mean_squared_error")
-    #     mse_tree = -mse_tree
+    #     mae_tree = cross_val_score(model_tree, X, y, cv=5, scoring="neg_mean_absolute_error")
+    #     mae_tree = -mae_tree
     #     print("Decision Tree:")
     #     print(f"Feature Count {feature_count}")
-    #     print(f"Mean Squared Error: {np.mean(mse_tree):.4f}")
+    #     print(f"Mean Absolute Error: {np.mean(mae_tree):.4f}")
     #     print(f"R² Score: {r2_tree.mean():.4f}")
     
 
@@ -146,19 +180,19 @@ for feature_count, df in data_by_feature.items():
     # if len(df.index) > 1000:
     #     model_poly.fit(X_train, y_train)
     #     y_pred_poly = model_poly.predict(X_test)
-    #     mse_poly = mean_squared_error(y_test,y_pred_poly)
+    #     mae_poly = mean_absolute_error(y_test,y_pred_poly)
     #     r2_poly = r2_score(y_test,y_pred_poly)
     #     print("Poly:")
     #     print(f"Feature Count {feature_count}")
-    #     print(f"Mean Squared Error: {mse_poly:.4f}")
+    #     print(f"Mean Absolute Error: {mae_poly:.4f}")
     #     print(f"R² Score: {r2_poly:.4f}")
     # else:
     #     r2_poly = cross_val_score(model_poly, X, y, cv=5, scoring="r2")
-    #     mse_poly = cross_val_score(model_poly, X, y, cv=5, scoring="neg_mean_squared_error")
-    #     mse_poly = -mse_poly
+    #     mae_poly = cross_val_score(model_poly, X, y, cv=5, scoring="neg_mean_absolute_error")
+    #     mae_poly = -mae_poly
     #     print("Poly:")
     #     print(f"Feature Count {feature_count}")
-    #     print(f"Mean Squared Error: {np.mean(mse_poly):.4f}")
+    #     print(f"Mean Absolute Error: {np.mean(mae_poly):.4f}")
     #     print(f"R² Score: {r2_poly.mean():.4f}")
 
     
@@ -187,19 +221,45 @@ for feature_count, df in data_by_feature.items():
     # if len(df.index) > 1000:
     #     model_linear.fit(X_train,y_train)
     #     y_pred_linear = model_linear.predict(X_test)
-    #     mse_linear = mean_squared_error(y_test,y_pred_linear)
+    #     mae_linear = mean_absolute_error(y_test,y_pred_linear)
     #     r2_linear = r2_score(y_test,y_pred_linear)
     #     print("Linear Regression:")
     #     print(f"Feature Count {feature_count}")
-    #     print(f"Mean Squared Error: {mse_linear:.4f}")
+    #     print(f"Mean Absolute Error: {mae_linear:.4f}")
     #     print(f"R² Score: {r2_linear:.4f}")
     # else:
     #     r2_linear = cross_val_score(model_linear, X, y, cv=5, scoring="r2")
-    #     mse_linear = cross_val_score(model_linear, X, y, cv=5, scoring="neg_mean_squared_error")
-    #     mse_linear = -mse_linear
+    #     mae_linear = cross_val_score(model_linear, X, y, cv=5, scoring="neg_mean_absolute_error")
+    #     mae_linear = -mae_linear
     #     print("Linear Regression:")
     #     print(f"Feature Count {feature_count}")
-    #     print(f"Mean Squared Error: {np.mean(mse_linear):.4f}")
+    #     print(f"Mean Squared Error: {np.mean(mae_linear):.4f}")
     #     print(f"R² Score: {r2_linear.mean():.4f}")
+# print("Testing with equinix-chicago2")
 
+# def is_model_fitted(model):
+#     try:
+#         check_is_fitted(model)
+#         return True
+#     except:
+#         return False
+    
+# for feature_count, test_df in test_data_by_feature.items(): 
+#     X = test_df.drop(columns=['feature_count', 'y'])
+#     y = test_df['y']
+#     model = models[feature_count]
+#     if len(test_df.index) > 1000 and (is_model_fitted(model)):
+#         y_pred_rf = model.predict(X)
+#         r2_rf = r2_score(y,y_pred_rf)
+#         mae_rf = mean_absolute_error(y, y_pred_rf)
+#         print(f"Feature Count {feature_count}")
+#         print(f"Mean Absolute Error: {mae_rf:.4f}" )
+#         print(f"R² Score: {r2_rf:.4f}")
+#     else:
+#         r2_rf = cross_val_score(model, X, y, cv=5, scoring="r2") # 5-Fold Cross-Validation
+#         mae_rf = cross_val_score(model, X, y, cv=5, scoring="neg_mean_absolute_error")
+#         mae_rf = -mae_rf
+#         print(f"Feature Count {feature_count}")
+#         print(f"Mean Absolute Error: {np.mean(mae_rf):.4f}")
+#         print(f"R² Score: {r2_rf.mean():.4f}")
 

@@ -10,7 +10,7 @@
 CMSketch *Sketch = new CMSketch(4,8192);
 std::unordered_map<std::string, uint> actual_size;
 int main(){
-	std::string dat_path = "equinix-chicago1_20mil.dat";
+	std::string dat_path = "equinix-chicago1.dat";
 	/*Insert your code here using the flowsize interface*/
 
 	std::ifstream file(dat_path,std::ios::binary);
@@ -37,9 +37,9 @@ int main(){
 
 	file.open(dat_path,std::ios::binary);
 	memset(buffer,0,13);
-	FILE* out = fopen("result.txt", "w");
-	FILE* counters = fopen("counters.txt","w");
-	FILE* all_flows = fopen("flows.txt","w");
+	// FILE* out = fopen("result.txt", "w");
+	FILE* counters = fopen("equinix-chicago1_counters.txt","w");
+	FILE* all_flows = fopen("equinix-chicago1_flows.txt","w");
 	float AAE = 0;
 	float ARE = 0;
 	
@@ -83,14 +83,14 @@ int main(){
 		// Sketch->PrintCounterFile(constData,actual_size[data],counters);
 	}
 	
-	AAE /= number_of_flows;
+	// AAE /= number_of_flows;
 	//aae_ml /= packet_count because query by each packet
 	// aae_ml /= packet_count;
 	// std::cout<<"AAE_ML: "<<aae_ml<<std::endl;
-	std::cout<<"AAE: "<<AAE<<std::endl;
+	// std::cout<<"AAE: "<<AAE<<std::endl;
 	// std::cout<<"ARE: "<<ARE<<std::endl;
 	
-	fclose(out);
+	// fclose(out);
 	fclose(counters);
 	fclose(all_flows);
 	return 0;
