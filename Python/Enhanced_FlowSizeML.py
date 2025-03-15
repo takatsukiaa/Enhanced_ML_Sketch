@@ -13,6 +13,7 @@ from xgboost import XGBRegressor
 from sklearn.model_selection import cross_val_score
 from sklearn.metrics import confusion_matrix
 from sklearn.utils.validation import check_is_fitted
+from sklearn.metrics import make_scorer
 
 
 with open("/home/takatsukiaa/ML-Sketch/Python/equinix-chicago1_output_4.csv", "r") as f:
@@ -99,6 +100,25 @@ data_by_feature = {
 #     8: test_df8
 # }
 
+def mean_relative_error(y_true, y_pred):
+    """
+    Calculate the Mean Relative Error (MRE) between true and predicted values.
+
+    Parameters:
+    y_true (array-like): Actual values
+    y_pred (array-like): Predicted values
+
+    Returns:
+    float: Mean Relative Error
+    """
+    y_true, y_pred = np.array(y_true), np.array(y_pred)
+    relative_error = np.abs(y_true - y_pred) / np.abs(y_true)
+    
+    # Avoid division by zero
+    relative_error = relative_error[~np.isinf(relative_error)]
+
+    return np.mean(relative_error)
+
 degree = 2
 models = {}   # Dictionary to hold models, keyed by feature count
 results = {}  # Dictionary to hold evaluation results
@@ -138,19 +158,26 @@ for feature_count, df in data_by_feature.items():
         model_rf.fit(X_train,y_train)
         y_pred_rf = model_rf.predict(X_test)
         # mse_rf = mean_squared_error(y_test,y_pred_rf)
-        r2_rf = r2_score(y_test,y_pred_rf)
+        mre_rf = mean_relative_error(y_test,y_pred_rf)
+        # r2_rf = r2_score(y_test,y_pred_rf)
         mae_rf = mean_absolute_error(y_test, y_pred_rf)
         print(f"Feature Count {feature_count}")
         print(f"Mean Absolute Error: {mae_rf:.4f}" )
-        print(f"R² Score: {r2_rf:.4f}")
+        print(f"Mean Relative Error:{mre_rf:.4f}")
+        # print(f"R² Score: {r2_rf:.4f}")
     else:
-        r2_rf = cross_val_score(model_rf, X, y, cv=5, scoring="r2") # 5-Fold Cross-Validation
+        mre_scorer = make_scorer(mean_relative_error, greater_is_better=False)
+        mre_rf = cross_val_score(model_rf, X, y, scoring=mre_scorer, cv=5)
+        mre_rf = -mre_rf
+        # r2_rf = cross_val_score(model_rf, X, y, cv=5, scoring="r2") # 5-Fold Cross-Validation
         mae_rf = cross_val_score(model_rf, X, y, cv=5, scoring="neg_mean_absolute_error")
         mae_rf = -mae_rf
         print(f"Feature Count {feature_count}")
         print(f"Mean Absolute Error: {np.mean(mae_rf):.4f}")
-        print(f"R² Score: {r2_rf.mean():.4f}")
-
+        print(f"Mean Relative Error:{np.mean(mre_rf):.4f}")
+    print("\n")
+        # print(f"R² Score: {r2_rf.mean():.4f}")
+    
     
     # Train decision tree model
     # if len(df.index) > 1000:
@@ -208,7 +235,7 @@ for feature_count, df in data_by_feature.items():
 
     # y_pred_ridge = model.predict(X_test_scaled)
 
-    # mse_ridge = mean_squared_error(y_test, y_pred_ridge)
+    # mse_ridge = mean_absolute_error(y_test, y_pred_ridge)
     # r2_ridge = r2_score(y_test, y_pred_ridge)
 
     # print("Ridge:")

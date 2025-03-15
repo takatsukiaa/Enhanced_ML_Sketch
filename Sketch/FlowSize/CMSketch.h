@@ -85,14 +85,14 @@ void CMSketch::Enhanced_Insert(cuc* str)
 	{
 		if(ov_flags[i][cid[i]] == 0)
 		{
-			sketch[i][cid[i]] = sketch[i][cid[i]]<<21>>21;
+			sketch[i][cid[i]] = sketch[i][cid[i]]<<22>>22;
 		}
 		++sketch[i][cid[i]];
 		if(sketch[i][cid[i]] < min || sketch[i][cid[i]] == min)
 		{
 			min = sketch[i][cid[i]];
 		}
-		if(sketch[i][cid[i]]>2047 && ov_flags[i][cid[i]] == 0)
+		if(sketch[i][cid[i]]>1023 && ov_flags[i][cid[i]] == 0)
 		{
 			ov_flags[i][cid[i]] = 1;
 		}
@@ -101,7 +101,7 @@ void CMSketch::Enhanced_Insert(cuc* str)
 	{
 		if(ov_flags[i][cid[i]] == '\0')
 		{
-			sketch[i][cid[i]] += min<<11;
+			sketch[i][cid[i]] += min<<10;
 		}
 	}
 }
@@ -187,7 +187,7 @@ uint CMSketch::Enhanced_Query(cuc* str, int* feature_count)
 			*feature_count +=1;
         } else {
             // 如果未溢出，僅取後 10 位值
-            value = sketch[i][cid[i]] & 2047;
+            value = sketch[i][cid[i]] & 1023;
 			*feature_count+=2;
         }
         
