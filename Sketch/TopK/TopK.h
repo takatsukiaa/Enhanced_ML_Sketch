@@ -11,6 +11,7 @@
 // 4--CUSAC
 // 5--PSAC
 
+//key value structure
 struct KV {
 	std::string key;
 	uint value;
@@ -57,6 +58,7 @@ public:
 
 	void Insert(cuc* str);
 	void PrintTopK();
+	std::vector<std::pair<std::string, uint>> GetTopK();
 	CMSketch* sketch;
 	
 	uint k;

@@ -26,7 +26,8 @@ CMSketch::~CMSketch(){
 void CMSketch::Insert(cuc *str){
 	for(uint i = 0; i < d; ++i){
 		uint cid = hf->Str2Int(str, i)%w;
-		if(sketch[i][cid] < 65535) ++sketch[i][cid];
+		// if(sketch[i][cid] < 65535) ++sketch[i][cid];
+		++sketch[i][cid];
 	}
 }
 
