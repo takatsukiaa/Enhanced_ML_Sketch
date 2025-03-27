@@ -225,9 +225,9 @@ void CMSketch::Enhanced_PrintCounterFile(cuc* str, uint acc_val, FILE* fout) {
             value = sketch[i][cid[i]];
             fprintf(fout, " %u", value);
         } else {
-            // 如果未溢出，輸出23位值 and 10-bit value
-            uint low = sketch[i][cid[i]] & 2047;
-            uint high = sketch[i][cid[i]] >> 11;
+            // 如果未溢出，輸出22位值 and 10-bit value
+            uint low = sketch[i][cid[i]] & 1023;
+            uint high = sketch[i][cid[i]] >> 10;
             fprintf(fout, " %u %u", high, low);
         }
     }

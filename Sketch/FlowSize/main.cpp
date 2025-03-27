@@ -21,16 +21,25 @@ int main(){
 	unsigned char* buffer = new unsigned char [13];
 	memset(buffer,0,13);
 	uint packet_count = 0;
-
+	int temp = 0;
 	//將每個packet的data讀進來，並insert到sketch
 	while(file.read(reinterpret_cast<char*>(buffer),13)|| file.gcount() > 0)
 	{
 		std::string data(reinterpret_cast<char*>(buffer), file.gcount());
 		cuc* constData = buffer;
 		// Sketch->Insert(constData);
+		if(temp<10000000||temp == 10000000)
+		{
+			temp++;
+			continue;
+		}
 		Sketch->Enhanced_Insert(constData);
 		actual_size[data]++;
 		packet_count++;
+		if(packet_count == 10000000)
+		{
+			break;
+		}
 	}
 	file.close();
 

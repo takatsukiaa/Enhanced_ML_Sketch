@@ -25,4 +25,4 @@ with open(file_path,"r") as file:
 # Print the counts
 print("Occurrences of each value:")
 for value in values_to_search:
-    print(f"Value {value}: {counts[value]} times")
+    print(f"Feature Count {value}: {counts[value]} times")

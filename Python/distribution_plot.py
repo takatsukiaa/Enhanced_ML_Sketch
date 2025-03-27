@@ -2,11 +2,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Load the file
-file_path = "/home/takatsukiaa/ML-Sketch/Python/equinix-chicago1_flows copy.csv"
-df = pd.read_csv(file_path, header=None)
+file_path = "/home/takatsukiaa/ML-Sketch/Python/equinix-chicago1_output_4.csv"
+df = pd.read_csv(file_path, header=None, sep='\s+')
 
 # Extract the second column as X-axis values
 x_values = df[1]
+max_x = max(x_values)
 
 # Count occurrences of each unique value in X-axis
 flow_counts = x_values.value_counts().sort_index()
@@ -19,7 +20,7 @@ plt.figure(figsize=(12, 6))
 plt.bar(flow_counts.index, flow_counts.values, width=1.5, log=True)
 
 # Set X-axis limit to include flow sizes up to 4096
-plt.xlim(min(flow_counts.index), 5000)
+plt.xlim(min(flow_counts.index), max(x_values))
 plt.ylim(1, max_y_value)
 
 # Annotate vertical lines for key flow sizes
