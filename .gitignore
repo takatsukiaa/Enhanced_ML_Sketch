@@ -8,7 +8,7 @@
 !.vscode/launch.json
 !.vscode/extensions.json
 .idea/**/*/
-
+.venv/*
 
 ### VisualStudioCode Patch ###
 # Ignore all local history of files
