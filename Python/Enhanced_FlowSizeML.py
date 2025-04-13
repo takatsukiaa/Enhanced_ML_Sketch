@@ -1,23 +1,23 @@
 import pandas as pd
 import numpy as np
-from sklearn.linear_model import LinearRegression
-from sklearn.linear_model import Ridge
-from sklearn.preprocessing import StandardScaler
+# from sklearn.linear_model import LinearRegression
+# from sklearn.linear_model import Ridge
+# from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error,r2_score, mean_absolute_error
-from sklearn.preprocessing import PolynomialFeatures
-from sklearn.pipeline import make_pipeline
-from sklearn.tree import DecisionTreeRegressor
+from sklearn.metrics import mean_absolute_error
+# from sklearn.preprocessing import PolynomialFeatures
+# from sklearn.pipeline import make_pipeline
+# from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 from xgboost import XGBRegressor
 from sklearn.model_selection import cross_val_score, cross_val_predict
-from sklearn.metrics import confusion_matrix
+# from sklearn.metrics import confusion_matrix
 from sklearn.utils.validation import check_is_fitted
 from sklearn.metrics import make_scorer
-from sklearn.model_selection import GridSearchCV
-import matplotlib.pyplot as plt
-from sklearn.feature_selection import SelectKBest, mutual_info_regression
-from sklearn.linear_model import HuberRegressor
+# from sklearn.model_selection import GridSearchCV
+# import matplotlib.pyplot as plt
+# from sklearn.feature_selection import SelectKBest, mutual_info_regression
+# from sklearn.linear_model import HuberRegressor
 import cudf as cd
 import cupy as cp
 
@@ -366,11 +366,11 @@ for feature_count, test_df in test_data_by_feature.items():
         mre = mean_relative_error(y,y_pred_gb)
         mae_original = mean_absolute_error(y_original,y_pred_original)
         mre_original = mean_relative_error(y_original,y_pred_original)
-        print(f"Feature Count {feature_count}")
-        print(f"Mean Absolute Error: {mae:.4f}" )
-        print(f"Mean Relative Error : {mre:.4f}")
-        print(f"Training Mean Absolute Error Transformed Back: {mae_original:.4f}" )
-        print(f"Training Mean Relative Error Transformed Back: {mre_original:.4f}")
+        # print(f"Feature Count {feature_count}")
+        # print(f"Mean Absolute Error: {mae:.4f}" )
+        # print(f"Mean Relative Error : {mre:.4f}")
+        # print(f"Training Mean Absolute Error Transformed Back: {mae_original:.4f}" )
+        # print(f"Training Mean Relative Error Transformed Back: {mre_original:.4f}")
     else:
         mre_scorer = make_scorer(mean_relative_error, greater_is_better=False)
         mre = cross_val_score(model, X, y, cv=5, scoring=mre_scorer)
@@ -389,8 +389,8 @@ mean_mae = total_mae / total_rows
 mean_mre = total_mre / total_rows
 mean_mae_original = total_mae_original / total_rows
 mean_mre_original = total_mre_original / total_rows
-print(f"Overall MAE:{mean_mae:.4f}")
-print(f"Overall MRE:{mean_mre:.4f}")
+print(f"Testing Overall MAE:{mean_mae:.4f}")
+print(f"Testing Overall MRE:{mean_mre:.4f}")
 print(f"Testing Overall MAE Transformed Back:{mean_mae_original:.4f}")
 print(f"Testing Overall MRE Transformed Back:{mean_mre_original:.4f}")
 
