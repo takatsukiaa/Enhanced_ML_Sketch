@@ -1,15 +1,18 @@
-#ifndef CMSKETCH_H
-#define CMSKETCH_H
+#ifndef COUNTSKETCH_H
+#define COUNTSKETCH_H
 #include <climits>
+#include <string_view>
+#include <functional>
 #include "common.h"
 #define THRESH 28
-struct CMSketch:public Sketch{
+struct CountSketch:public Sketch{
 public:
-	CMSketch(uint d, uint w);
-	~CMSketch();
+	CountSketch(uint d, uint w);
+	~CountSketch();
 	void Insert(cuc *str);
 	void Enhanced_Insert(cuc* str);
 	void GetHashedValue(cuc *str, uint *counters);
+    int Sign_Hash(cuc* str, int i);
 	uint Query(cuc *str, bool ml = FALSE);
 	void PrintCounter(cuc* str, uint acc_val);
 	void PrintCounterFile(cuc * str, uint acc_val, FILE * fout);
@@ -22,7 +25,7 @@ public:
 	void Enhanced_PrintCounterFile(cuc * str, uint acc_val, FILE * fout);
 private:
 	HashFunction *hf;
-	uint** sketch;
+	int** sketch;
 	float* para;
 	float* mean;
 	float* scale;
@@ -33,13 +36,13 @@ private:
 };
 
 
-CMSketch::CMSketch(uint d, uint w):d(d), w(w){
-	sketch = new uint*[d];
+CountSketch::CountSketch(uint d, uint w):d(d), w(w){
+	sketch = new int*[d];
 	ov_flags = new uchar*[d];
 	for(uint i = 0; i < d; ++i){
-		sketch[i] = new uint[w];
+		sketch[i] = new int[w];
 		ov_flags[i] = new uchar[w];
-		memset(sketch[i], 0, w * sizeof(uint));
+		memset(sketch[i], 0, w * sizeof(int));
 		memset(ov_flags[i], 0, w * sizeof(uchar));
 	}
 	hf = new HashFunction();
@@ -49,7 +52,7 @@ CMSketch::CMSketch(uint d, uint w):d(d), w(w){
 	t = new uint[d];
 }
 
-CMSketch::~CMSketch(){
+CountSketch::~CountSketch(){
 	for(uint i = 0; i < d; ++i) delete [] sketch[i];
 	delete [] sketch;
 	delete hf;
@@ -59,7 +62,7 @@ CMSketch::~CMSketch(){
 	delete [] t;
 }
 
-void CMSketch::Insert(cuc *str){
+void CountSketch::Insert(cuc *str){
     for (uint i = 0; i < d; ++i){
         uint cid = hf->Str2Int(str, i) % w;
         if (sketch[i][cid] == -1) {
@@ -68,13 +71,29 @@ void CMSketch::Insert(cuc *str){
 		++sketch[i][cid];
 	}
 }
-void CMSketch::Enhanced_Insert(cuc* str)
+uint32_t fnv1a(cuc* key, size_t len, uint32_t seed) {
+    uint32_t hash = 2166136261u ^ seed;  // offset basis XORed with seed
+    for (size_t i = 0; i < len; ++i) {
+        hash ^= key[i];
+        hash *= 16777619u;  // FNV prime
+    }
+    return hash;
+}
+
+int CountSketch::Sign_Hash(cuc* str, int i)
+{
+    uint32_t h = fnv1a(str, 13, i + 100);
+    return (h % 2 == 0) ? 1 : -1;
+}
+
+void CountSketch::Enhanced_Insert(cuc* str)
 {
 	uint min = 0;
 	uint cid[4];
 	for(uint i=0; i < d; i++)
 	{
 		cid[i] = hf->Str2Int(str, i) % w;
+
 		if(sketch[i][cid[i]] == -1)
 		{
 			return;
@@ -83,11 +102,12 @@ void CMSketch::Enhanced_Insert(cuc* str)
 	min = sketch[0][cid[0]];
 	for(uint i = 0; i < d; i++)
 	{
+        int sign = Sign_Hash(str,i);
 		if(ov_flags[i][cid[i]] == 0)
 		{
 			sketch[i][cid[i]] = sketch[i][cid[i]]<<22>>22;
 		}
-		++sketch[i][cid[i]];
+		sketch[i][cid[i]] += sign;
 		if(sketch[i][cid[i]] < min || sketch[i][cid[i]] == min)
 		{
 			min = sketch[i][cid[i]];
@@ -106,7 +126,8 @@ void CMSketch::Enhanced_Insert(cuc* str)
 	}
 }
 
-void CMSketch::GetHashedValue(cuc *str, uint *counters)
+
+void CountSketch::GetHashedValue(cuc *str, uint *counters)
 {
 	for(uint i = 0; i < d; i++)
 	{
@@ -114,7 +135,7 @@ void CMSketch::GetHashedValue(cuc *str, uint *counters)
 	}
 }
 
-uint CMSketch::Query(cuc *str, bool ml){
+uint CountSketch::Query(cuc *str, bool ml){
 	memset(t, 0, sizeof(t)*3);
 
 	uint Min;
@@ -150,7 +171,8 @@ uint CMSketch::Query(cuc *str, bool ml){
 	}
 }
 
-void CMSketch::PrintCounter(cuc* str, uint acc_val){
+
+void CountSketch::PrintCounter(cuc* str, uint acc_val){
 	for(uint i = 0; i < d; ++i){
 		uint cid = hf->Str2Int(str, i)%w;
 		t[i] = sketch[i][cid];
@@ -166,7 +188,7 @@ void CMSketch::PrintCounter(cuc* str, uint acc_val){
 		printf("\n");
 	}
 }
-uint CMSketch::Enhanced_Query(cuc* str, int* feature_count)
+uint CountSketch::Enhanced_Query(cuc* str, int* feature_count)
 {
     uint min = UINT_MAX;
     uint cid[3];
@@ -200,9 +222,9 @@ uint CMSketch::Enhanced_Query(cuc* str, int* feature_count)
     // Step 3: 返回最小值
     return min;
 }
-void CMSketch::Enhanced_PrintCounterFile(cuc* str, uint acc_val, FILE* fout) {
+void CountSketch::Enhanced_PrintCounterFile(cuc* str, uint acc_val, FILE* fout) {
     uint cid[4];
-    uint value;
+    int value;
     int feature_count = 0;
     //計算 Hash 值
     for (uint i = 0; i < d; i++) {
@@ -223,19 +245,19 @@ void CMSketch::Enhanced_PrintCounterFile(cuc* str, uint acc_val, FILE* fout) {
         if (ov_flags[i][cid[i]] == 1) {
             // 如果溢出，輸出 32 位值
             value = sketch[i][cid[i]];
-            fprintf(fout, " %u", value);
+            fprintf(fout, " %d", value);
         } else {
             // 如果未溢出，輸出22位值 and 10-bit value
-            uint low = sketch[i][cid[i]] & 1023;
-            uint high = sketch[i][cid[i]] >> 10;
-            fprintf(fout, " %u %u", high, low);
+            int low = sketch[i][cid[i]] & 1023;
+            int high = sketch[i][cid[i]] >> 10;
+            fprintf(fout, " %d %d", high, low);
         }
     }
     fprintf(fout, "\n"); 
 }
 
 
-void CMSketch::PrintCounterFile(cuc * str, uint acc_val, FILE * fout)
+void CountSketch::PrintCounterFile(cuc * str, uint acc_val, FILE * fout)
 {
 	for(uint i = 0; i < d; ++i){
 		uint cid = hf->Str2Int(str, i)%w;
@@ -252,7 +274,7 @@ void CMSketch::PrintCounterFile(cuc * str, uint acc_val, FILE * fout)
 	fprintf(fout, "\n");
 }
 
-void CMSketch::LoadPara(cuc *path){
+void CountSketch::LoadPara(cuc *path){
 	float temp;
 	FILE *file = fopen((const char*)path, "r");
 	for(uint i = 0; i < d; ++i){
@@ -267,7 +289,7 @@ void CMSketch::LoadPara(cuc *path){
 		fscanf(file, "%f", para+i);
 	}
 }
-float CMSketch::CalculateAAE(cuc * str, uint acc_val)
+float CountSketch::CalculateAAE(cuc * str, uint acc_val)
 {
 	for(uint i = 0; i < d; ++i){
 		uint cid = hf->Str2Int(str, i)%w;
@@ -276,11 +298,11 @@ float CMSketch::CalculateAAE(cuc * str, uint acc_val)
 	std::sort(t, t + d);
 	return abs((float)t[0] - acc_val);
 }
-float CMSketch::CalculateAAE_ML(cuc * str, uint acc_val, float query_val)
+float CountSketch::CalculateAAE_ML(cuc * str, uint acc_val, float query_val)
 {
 	return abs(query_val - acc_val);
 }
-float CMSketch::CalculateARE(cuc* str, uint acc_val)
+float CountSketch::CalculateARE(cuc* str, uint acc_val)
 {
 	for(uint i = 0; i < d; ++i){
 		uint cid = hf->Str2Int(str, i)%w;
@@ -289,7 +311,7 @@ float CMSketch::CalculateARE(cuc* str, uint acc_val)
 	std::sort(t, t + d);
 	return abs(((float)t[0] - acc_val)/acc_val);
 }
-float CMSketch::Predict(uint *t){
+float CountSketch::Predict(uint *t){
 	float res = 0;
 	for(uint i = 0; i < d; ++i){
 		res += para[i]*((t[i]-mean[i])/scale[i]);

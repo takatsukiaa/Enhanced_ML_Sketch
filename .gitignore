@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Created by https://www.gitignore.io/api/visualstudiocode
 # Edit at https://www.gitignore.io/?templates=visualstudiocode
 
@@ -19,3 +20,26 @@
 *.csv
 
 # End of https://www.gitignore.io/api/visualstudiocode
+=======
+# Created by https://www.gitignore.io/api/visualstudiocode
+# Edit at https://www.gitignore.io/?templates=visualstudiocode
+
+### VisualStudioCode ###
+.vscode/*     # Maybe .vscode/**/* instead - see comments
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/**/*/
+
+
+### VisualStudioCode Patch ###
+# Ignore all local history of files
+**/.history
+*.txt
+*.exe
+*.dat
+*.csv
+
+# End of https://www.gitignore.io/api/visualstudiocode
+>>>>>>> spliting_counter
