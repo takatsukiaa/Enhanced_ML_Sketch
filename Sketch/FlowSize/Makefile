@@ -1,5 +1,5 @@
 CC = g++
-OPTION = -std=c++11
+OPTION = -std=c++17
 HEADFILE = CMSketch.h CMSACSketch.h CUSketch.h CUSACSketch.h PSketch.h PSACSketch.h
 
 main : main.cpp $(HEADFILE)
