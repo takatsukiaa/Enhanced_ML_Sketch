@@ -5,6 +5,9 @@ HEADFILE = CMSketch.h CMSACSketch.h CUSketch.h CUSACSketch.h PSketch.h PSACSketc
 main : main.cpp $(HEADFILE)
 	$(CC) -o main main.cpp $(OPTION)
 
+main_CU : main_CU.cpp $(HEADFILE)
+	$(CC) -o main_CU main_CU.cpp $(OPTION)
+
 clean : 
 	rm main
 
