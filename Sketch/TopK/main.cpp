@@ -1,120 +1,145 @@
-#include "TopK.h"
 #include "CMSketch.h"
-#include <unordered_set>
-// #include "CUSketch.h"
-// #include "CUSACSketch.h"
-// #include "PSketch.h"
-// #include "PSACSketch.h"
 #include <fstream>
 #include <string>
-//k is the size of heap (100 for now)
-TopK topk(0,4,8192,500);
-std::unordered_map<std::string, uint> actual_size;
+#include <queue>
+#include <unordered_set>
 
-//return actual top-k flows
-std::vector<std::pair<std::string, uint>> GetActualTopK(uint k) {
-    std::vector<std::pair<std::string, uint>> actual_list(actual_size.begin(), actual_size.end());
-    std::sort(actual_list.begin(), actual_list.end(), 
-        [](const std::pair<std::string, uint> &a, const std::pair<std::string, uint> &b) {
-            return a.second > b.second; // 由大到小排序
-        });
-    if (actual_list.size() > k) {
-        actual_list.resize(k); // 只取前 K 名
+#define MICE_threshold 100
+
+using namespace std;
+
+// 把 binary 字串轉成 hex 字串（方便當 ID）
+string ToHex(const string& binary) {
+    static const char* hex_chars = "0123456789ABCDEF";
+    string hex;
+    hex.reserve(binary.size() * 2);
+    for (unsigned char c : binary) {
+        hex += hex_chars[c >> 4];
+        hex += hex_chars[c & 0x0F];
     }
-    return actual_list;
+    return hex;
 }
 
-//compare top-k flows
-void CompareTopK(const std::vector<std::pair<std::string, uint>>& topk_estimated,
-                 const std::vector<std::pair<std::string, uint>>& topk_actual) {
-    std::unordered_set<std::string> estimated_set;
-    std::unordered_set<std::string> actual_set;
+// Flow 結構：存 flow id 和流量大小
+struct Flow {
+    string id;
+    uint size;
 
-    // 轉換為 Hash Set，方便比較
-    for (const auto &pair : topk_estimated) {
-        estimated_set.insert(pair.first);
+    bool operator<(const Flow& other) const {
+        return size > other.size; // 讓 priority_queue 變成最小堆
     }
-    for (const auto &pair : topk_actual) {
-        actual_set.insert(pair.first);
+};
+
+int main() {
+    string dat_path = "equinix-chicago1.dat";
+    CMSketch* TrainSketch = new CMSketch(4, 8192);
+    CMSketch* TestSketch = new CMSketch(4, 8192);
+
+    ifstream file(dat_path, ios::binary);
+    if (!file) {
+        cout << "Error, file not found!\n";
+        return -1;
     }
 
-    // 計算 TP, FP, FN
-    uint TP = 0, FP = 0, FN = 0;
-    for (const auto &id : estimated_set) {
-        if (actual_set.count(id)) {
-            TP++; // 預測為 Top-K，且真的在 Top-K
+    unsigned char* buffer = new unsigned char[13];
+    memset(buffer, 0, 13);
+    uint packet_count = 0;
+    int K = 1000; // Top-K大小設定
+
+    unordered_map<string, uint> train_actual_size;
+    unordered_map<string, uint> test_actual_size;
+
+    // --- 讀檔，根據前後1千萬筆，分別插入不同的Sketch ---
+    while (file.read(reinterpret_cast<char*>(buffer), 13) || file.gcount() > 0) {
+        string data(reinterpret_cast<char*>(buffer), file.gcount());
+        cuc* constData = buffer;
+
+        if (packet_count < 10000000) {
+            TrainSketch->Enhanced_Insert(constData);
+            train_actual_size[data]++;
         } else {
-            FP++; // 預測為 Top-K，但實際不在 Top-K
+            TestSketch->Enhanced_Insert(constData);
+            test_actual_size[data]++;
+        }
+        packet_count++;
+    }
+    file.close();
+
+    // --- 建立 Training Top-K ---
+    priority_queue<Flow> trainHeap;
+    for (auto& it : train_actual_size) {
+        if (trainHeap.size() < K) trainHeap.push({it.first, it.second});
+        else if (it.second > trainHeap.top().size) {
+            trainHeap.pop();
+            trainHeap.push({it.first, it.second});
         }
     }
-    for (const auto &id : actual_set) {
-        if (!estimated_set.count(id)) {
-            FN++; // 真正的 Top-K 被漏掉了
-        }
+    unordered_set<string> trainTopKFlows;
+    while (!trainHeap.empty()) {
+        trainTopKFlows.insert(trainHeap.top().id);
+        trainHeap.pop();
     }
 
-    // Precision, Recall, F1-score
-    float Precision = (TP + FP == 0) ? 0 : (float)TP / (TP + FP);
-    float Recall = (TP + FN == 0) ? 0 : (float)TP / (TP + FN);
-    float F1 = (Precision + Recall == 0) ? 0 : 2 * (Precision * Recall) / (Precision + Recall);
+    // --- 建立 Testing Top-K ---
+    priority_queue<Flow> testHeap;
+    for (auto& it : test_actual_size) {
+        if (testHeap.size() < K) testHeap.push({it.first, it.second});
+        else if (it.second > testHeap.top().size) {
+            testHeap.pop();
+            testHeap.push({it.first, it.second});
+        }
+    }
+    unordered_set<string> testTopKFlows;
+    while (!testHeap.empty()) {
+        testTopKFlows.insert(testHeap.top().id);
+        testHeap.pop();
+    }
 
-    // 輸出結果
-	printf("TP: %u FP: %u\n", TP, FP);
-	printf("FN: %u\n", FN);
-    printf("Precision: %.4f\n", Precision);
-    printf("Recall: %.4f\n", Recall);
-    printf("F1-score: %.4f\n", F1);
-}
-int main(){
-	std::string dat_path = "equinix-chicago1.dat";
-	/*Insert your code here using the flowsize interface*/
+    // --- 輸出 Training flows 到 CSV ---
+    FILE* train_flows = fopen("equinix-chicago1_training_flows.csv", "w");
+    if (!train_flows) {
+        cout << "Error, cannot open training output file!\n";
+        return -1;
+    }
+    fprintf(train_flows, "topk_flag,ID,feature_count,actual_size,1,2,3,4,5,6,7,8\n");
 
-	std::ifstream file(dat_path,std::ios::binary);
-	if(!file){
-		std::cout<<"error, file not found!\n";
-		return -1;
-	}
-	unsigned char* buffer = new unsigned char [13];
-	memset(buffer,0,13);
-	uint packet_count = 0;
+    for (auto it = train_actual_size.begin(); it != train_actual_size.end(); ++it) {
+        cuc* temp = reinterpret_cast<cuc*>(const_cast<char*>(it->first.c_str()));
+        int size = it->second;
+        string hex_id = ToHex(it->first);
 
-	//將每個packet的data讀進來，並insert到sketch
-	while(file.read(reinterpret_cast<char*>(buffer),13)|| file.gcount() > 0)
-	{
-		std::string data(reinterpret_cast<char*>(buffer), file.gcount());
-		cuc* constData = buffer;
-		topk.Insert(constData);
-		actual_size[data]++;
-		packet_count++;
-	}
-	file.close();
+        int is_topk = trainTopKFlows.count(it->first) ? 1 : 0;
+        fprintf(train_flows, "%d,%s", is_topk, hex_id.c_str());
+        TrainSketch->Enhanced_PrintCounterFile(temp, size, train_flows);
+    }
+    fclose(train_flows);
 
+    // --- 輸出 Testing flows 到 CSV ---
+    FILE* test_flows = fopen("equinix-chicago1_testing_flows.csv", "w");
+    if (!test_flows) {
+        cout << "Error, cannot open testing output file!\n";
+        return -1;
+    }
+    fprintf(test_flows, "topk_flag,ID,feature_count,actual_size,1,2,3,4,5,6,7,8\n");
 
-	file.open(dat_path,std::ios::binary);
-	memset(buffer,0,13);
-	// FILE* out = fopen("result.txt", "w");
-	FILE* counters = fopen("equinix-chicago1_counters.txt","w");
-	FILE* all_flows = fopen("equinix-chicago1_flows.txt","w");
+    for (auto it = test_actual_size.begin(); it != test_actual_size.end(); ++it) {
+        cuc* temp = reinterpret_cast<cuc*>(const_cast<char*>(it->first.c_str()));
+        int size = it->second;
+        string hex_id = ToHex(it->first);
 
+        int is_topk = testTopKFlows.count(it->first) ? 1 : 0;
+        fprintf(test_flows, "%d,%s", is_topk, hex_id.c_str());
+        TestSketch->Enhanced_PrintCounterFile(temp, size, test_flows);
+    }
+    fclose(test_flows);
 
-	printf("Total Packet Count: %u\n", packet_count);
-	printf("Total Flow Count: %lu\n", actual_size.size());
+    printf("Total Packet Count: %u\n", packet_count);
+    printf("Training Flow Count: %lu\n", train_actual_size.size());
+    printf("Testing Flow Count: %lu\n", test_actual_size.size());
 
-	//varify if top-k in heap is really top-k flow
-	// 獲取 Min-Heap 的 Top-K
-	std::vector<std::pair<std::string, uint>> estimated_topk = topk.GetTopK();
+    delete[] buffer;
+    delete TrainSketch;
+    delete TestSketch;
 
-	// 獲取真實的 Top-K
-	std::vector<std::pair<std::string, uint>> actual_topk = GetActualTopK(100); // 設定 K=100
-
-	// 進行比較
-	CompareTopK(estimated_topk, actual_topk);
-
-	
-	
-	
-	// fclose(out);
-	fclose(counters);
-	fclose(all_flows);
-	return 0;
+    return 0;
 }
