@@ -60,7 +60,7 @@ struct HashFunction{
 struct Sketch{
 	virtual void Insert(cuc *str) = 0;
 	virtual uint Query(cuc *str, bool ml = FALSE) = 0;
-	virtual void PrintCounter(cuc *str) = 0;
+	// virtual void PrintCounter(cuc *str) = 0;
 };
 
 #endif
