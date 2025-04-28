@@ -9,7 +9,7 @@
 
 CUSketch *Sketch = new CUSketch(4,8192);
 std::unordered_map<std::string, uint> actual_size;
-int main(){
+int main(int argc, char *argv[]){
 	std::string dat_path = "equinix-chicago1.dat";
 	/*Insert your code here using the flowsize interface*/
 
@@ -28,10 +28,13 @@ int main(){
 		std::string data(reinterpret_cast<char*>(buffer), file.gcount());
 		cuc* constData = buffer;
 		// Sketch->Insert(constData);
-		if(temp<10000000||temp == 10000000)
+		if(strcmp(argv[1],"2") == 0)
 		{
-			temp++;
-			continue;
+			if(temp<10000000||temp == 10000000)
+			{
+				temp++;
+				continue;
+			}
 		}
 		Sketch->Enhanced_Insert(constData);
 		actual_size[data]++;

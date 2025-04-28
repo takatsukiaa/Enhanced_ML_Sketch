@@ -1,6 +1,6 @@
 #ifndef TOPK_H
 #define TOPK_H
-
+#include <vector>
 #include "Sketch.h"
 
 // Initialize a sketch

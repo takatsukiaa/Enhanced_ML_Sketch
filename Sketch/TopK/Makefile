@@ -1,8 +1,8 @@
 CC = g++
 OPTION = -std=c++11
 
-main : main.o TopK.o Sketch.o CMSACSketch.o CMSketch.o CUSACSketch.o CUSketch.o PSACSketch.o PSketch.o common.o
-	$(CC) -o main main.o TopK.o Sketch.o CMSACSketch.o CMSketch.o CUSACSketch.o CUSketch.o PSACSketch.o PSketch.o common.o $(OPTION)
+main : main.o CMSketch.o common.o
+	$(CC) -o main main.o CMSketch.o common.o $(OPTION)
 
 train : train.o TopK.o Sketch.o CMSACSketch.o CMSketch.o CUSACSketch.o CUSketch.o PSACSketch.o PSketch.o common.o
 	$(CC) -o train train.o TopK.o Sketch.o CMSACSketch.o CMSketch.o CUSACSketch.o CUSketch.o PSACSketch.o PSketch.o common.o
