@@ -1,12 +1,14 @@
-#include "CMSketch.h"
+#include "CUSketch.h"
 #include <fstream>
 #include <string>
 #include <queue>
 #include <unordered_set>
 
 #define MICE_threshold 100
+#define TEN_MINUTES 3982447
 
 using namespace std;
+
 
 // 把 binary 字串轉成 hex 字串（方便當 ID）
 string ToHex(const string& binary) {
@@ -32,8 +34,8 @@ struct Flow {
 
 int main() {
     string dat_path = "equinix-chicago1.dat";
-    CMSketch* TrainSketch = new CMSketch(4, 8192);
-    CMSketch* TestSketch = new CMSketch(4, 8192);
+    CUSketch* TrainSketch = new CUSketch(4, 8192);
+    CUSketch* TestSketch = new CUSketch(4, 8192);
 
     ifstream file(dat_path, ios::binary);
     if (!file) {
@@ -44,7 +46,7 @@ int main() {
     unsigned char* buffer = new unsigned char[13];
     memset(buffer, 0, 13);
     uint packet_count = 0;
-    int K = 1000; // Top-K大小設定
+    int K = 100; // Top-K大小設定
 
     unordered_map<string, uint> train_actual_size;
     unordered_map<string, uint> test_actual_size;
@@ -53,13 +55,12 @@ int main() {
     while (file.read(reinterpret_cast<char*>(buffer), 13) || file.gcount() > 0) {
         string data(reinterpret_cast<char*>(buffer), file.gcount());
         cuc* constData = buffer;
-
-        if (packet_count < 10000000) {
+        if (packet_count < TEN_MINUTES) {
             TrainSketch->Enhanced_Insert(constData);
             train_actual_size[data]++;
-        } else {
-            TestSketch->Enhanced_Insert(constData);
-            test_actual_size[data]++;
+        }
+        else {
+            
         }
         packet_count++;
     }
