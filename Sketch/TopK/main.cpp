@@ -1,146 +1,153 @@
-#include "CUSketch.h"
+//this is the version each 
+
+#include "TopK.h"
+#include <iostream>
 #include <fstream>
-#include <string>
-#include <queue>
+#include <vector>
 #include <unordered_set>
-
-#define MICE_threshold 100
-#define TEN_MINUTES 3982447
-
+#include <unordered_map>
+#include <string>
+#include <algorithm>
 using namespace std;
+std::unordered_map<std::string, uint> train_actual_size;
+std::unordered_map<std::string, uint> test_actual_size;
+int train_pkt_count = 10000000;
+int initial_k = 500,max_k = 500,step = 100;
+// 初始化 CSV 檔案
+std::ofstream csv_file("topk_accuracy.csv");
 
-
-// 把 binary 字串轉成 hex 字串（方便當 ID）
-string ToHex(const string& binary) {
-    static const char* hex_chars = "0123456789ABCDEF";
-    string hex;
-    hex.reserve(binary.size() * 2);
-    for (unsigned char c : binary) {
-        hex += hex_chars[c >> 4];
-        hex += hex_chars[c & 0x0F];
-    }
-    return hex;
+void InitCSV() {
+    csv_file << "File,Total Flow Count,Total Packet Count,k,Precision,Recall,F1-score\n";
 }
 
-// Flow 結構：存 flow id 和流量大小
-struct Flow {
-    string id;
-    uint size;
+// 記錄結果到 CSV
+void SaveToCSV(const std::string& file_name, uint flow_count, uint packet_count, uint k, float precision, float recall, float f1) {
+    csv_file << file_name << "," << flow_count << "," << packet_count << "," << k << "," << precision << "," << recall << "," << f1 << "\n";
+}
 
-    bool operator<(const Flow& other) const {
-        return size > other.size; // 讓 priority_queue 變成最小堆
+// return actual top-k flows
+std::vector<std::pair<std::string, uint>> GetActualTopK(uint k, std::unordered_map<std::string, uint> actual_size) {
+    std::vector<std::pair<std::string, uint>> actual_list(actual_size.begin(), actual_size.end());
+    std::sort(actual_list.begin(), actual_list.end(), 
+        [](const std::pair<std::string, uint>& a, const std::pair<std::string, uint>& b) {
+            return a.second > b.second;
+        });
+    if (actual_list.size() > k) {
+        actual_list.resize(k);  // 只取前 K 名
     }
-};
+    return actual_list;
+}
+
+// 計算準確度
+std::tuple<float, float, float> CompareTopK(const std::vector<std::pair<std::string, uint>>& topk_estimated,
+                                            const std::vector<std::pair<std::string, uint>>& topk_actual) {
+    std::unordered_set<std::string> estimated_set, actual_set;
+
+    for (const auto& pair : topk_estimated) estimated_set.insert(pair.first);
+    for (const auto& pair : topk_actual) actual_set.insert(pair.first);
+
+    uint TP = 0, FP = 0, FN = 0;
+    for (const auto& id : estimated_set) {
+        if (actual_set.count(id)) TP++;
+        else FP++;
+    }
+    for (const auto& id : actual_set) {
+        if (!estimated_set.count(id)) FN++;
+    }
+
+    float precision = (TP + FP == 0) ? 0 : (float)TP / (TP + FP);
+    float recall = (TP + FN == 0) ? 0 : (float)TP / (TP + FN);
+    float f1 = (precision + recall == 0) ? 0 : 2 * (precision * recall) / (precision + recall);
+    int overlap_count = 0;
+    for (const auto& pair : topk_estimated) {
+        if (actual_set.count(pair.first)) overlap_count++;
+    }
+    float overlap_ratio = (float)overlap_count / topk_estimated.size();
+    std::cout << "Overlap Ratio: " << overlap_ratio << std::endl;   
+    return {precision, recall, f1};
+}
 
 int main() {
-    string dat_path = "equinix-chicago1.dat";
-    CUSketch* TrainSketch = new CUSketch(4, 8192);
-    CUSketch* TestSketch = new CUSketch(4, 8192);
-
-    ifstream file(dat_path, ios::binary);
+    std::string dat_path = "equinix-chicago1.dat";
+    std::ifstream file(dat_path, std::ios::binary);
     if (!file) {
-        cout << "Error, file not found!\n";
+        std::cout << "Error: File not found!\n";
         return -1;
     }
 
     unsigned char* buffer = new unsigned char[13];
     memset(buffer, 0, 13);
     uint packet_count = 0;
-    int K = 100; // Top-K大小設定
 
-    unordered_map<string, uint> train_actual_size;
-    unordered_map<string, uint> test_actual_size;
-
-    // --- 讀檔，根據前後1千萬筆，分別插入不同的Sketch ---
+    // 讀取數據一次，統計真實流量數據
     while (file.read(reinterpret_cast<char*>(buffer), 13) || file.gcount() > 0) {
-        string data(reinterpret_cast<char*>(buffer), file.gcount());
-        cuc* constData = buffer;
-        if (packet_count < TEN_MINUTES) {
-            TrainSketch->Enhanced_Insert(constData);
+        std::string data(reinterpret_cast<char*>(buffer), 13);
+        
+        packet_count++;
+        if(packet_count <= train_pkt_count) {
             train_actual_size[data]++;
+            // break;  // 限制讀取前 10000000 筆資料
         }
         else {
-            
+            test_actual_size[data]++;
         }
-        packet_count++;
     }
     file.close();
-
-    // --- 建立 Training Top-K ---
-    priority_queue<Flow> trainHeap;
-    for (auto& it : train_actual_size) {
-        if (trainHeap.size() < K) trainHeap.push({it.first, it.second});
-        else if (it.second > trainHeap.top().size) {
-            trainHeap.pop();
-            trainHeap.push({it.first, it.second});
-        }
-    }
-    unordered_set<string> trainTopKFlows;
-    while (!trainHeap.empty()) {
-        trainTopKFlows.insert(trainHeap.top().id);
-        trainHeap.pop();
-    }
-
-    // --- 建立 Testing Top-K ---
-    priority_queue<Flow> testHeap;
-    for (auto& it : test_actual_size) {
-        if (testHeap.size() < K) testHeap.push({it.first, it.second});
-        else if (it.second > testHeap.top().size) {
-            testHeap.pop();
-            testHeap.push({it.first, it.second});
-        }
-    }
-    unordered_set<string> testTopKFlows;
-    while (!testHeap.empty()) {
-        testTopKFlows.insert(testHeap.top().id);
-        testHeap.pop();
-    }
-
-    // --- 輸出 Training flows 到 CSV ---
-    FILE* train_flows = fopen("equinix-chicago1_training_flows.csv", "w");
-    if (!train_flows) {
-        cout << "Error, cannot open training output file!\n";
-        return -1;
-    }
-    fprintf(train_flows, "topk_flag,ID,feature_count,actual_size,1,2,3,4,5,6,7,8\n");
-
-    for (auto it = train_actual_size.begin(); it != train_actual_size.end(); ++it) {
-        cuc* temp = reinterpret_cast<cuc*>(const_cast<char*>(it->first.c_str()));
-        int size = it->second;
-        string hex_id = ToHex(it->first);
-
-        int is_topk = trainTopKFlows.count(it->first) ? 1 : 0;
-        fprintf(train_flows, "%d,%s", is_topk, hex_id.c_str());
-        TrainSketch->Enhanced_PrintCounterFile(temp, size, train_flows);
-    }
-    fclose(train_flows);
-
-    // --- 輸出 Testing flows 到 CSV ---
-    FILE* test_flows = fopen("equinix-chicago1_testing_flows.csv", "w");
-    if (!test_flows) {
-        cout << "Error, cannot open testing output file!\n";
-        return -1;
-    }
-    fprintf(test_flows, "topk_flag,ID,feature_count,actual_size,1,2,3,4,5,6,7,8\n");
-
-    for (auto it = test_actual_size.begin(); it != test_actual_size.end(); ++it) {
-        cuc* temp = reinterpret_cast<cuc*>(const_cast<char*>(it->first.c_str()));
-        int size = it->second;
-        string hex_id = ToHex(it->first);
-
-        int is_topk = testTopKFlows.count(it->first) ? 1 : 0;
-        fprintf(test_flows, "%d,%s", is_topk, hex_id.c_str());
-        TestSketch->Enhanced_PrintCounterFile(temp, size, test_flows);
-    }
-    fclose(test_flows);
-
+    //print pkt info    
     printf("Total Packet Count: %u\n", packet_count);
     printf("Training Flow Count: %lu\n", train_actual_size.size());
     printf("Testing Flow Count: %lu\n", test_actual_size.size());
 
-    delete[] buffer;
-    delete TrainSketch;
-    delete TestSketch;
+    InitCSV();  // 初始化 CSV 檔案
 
+    for (uint k = initial_k; k <= max_k; k += step) {
+        // 重新建立 TopK
+        TopK train_topk(0, 4, 8192/2, k);
+        TopK test_topk(0, 4, 8192/2, k);
+        
+        std::unordered_set<std::string> train_actual_set;
+        std::unordered_set<std::string> test_actual_set;
+    
+        for (const auto& pair : train_actual_size) train_actual_set.insert(pair.first);
+        for(const auto& pair : test_actual_size) test_actual_set.insert(pair.first);
+        train_topk.SetEnv(fopen("training.csv", "w"), &train_actual_set);
+        test_topk.SetEnv(fopen("testing.csv", "w"), &test_actual_set);
+		cout<<"**building topk....**"<<endl;
+        // 插入流量數據到 TopK
+        // 重新讀取檔案，將數據插入 TopK
+        file.open(dat_path, std::ios::binary);
+        memset(buffer, 0, 13);
+        int size = 0;
+        while (file.read(reinterpret_cast<char*>(buffer), 13) || file.gcount() > 0) {
+            std::string data(reinterpret_cast<char*>(buffer),13);
+            cuc* constData = buffer;
+            size++;
+            if(size <= train_pkt_count) {
+                train_topk.Insert(constData);
+            }
+            else {
+                test_topk.Insert(constData);
+            }
+            
+
+        }
+        file.close();
+        train_topk.DumpToCSV("training.csv");
+        test_topk.DumpToCSV("testing.csv");
+		cout<<"**finish insert topk**"<<endl;
+        // // 取得 Top-K（no ML)
+        // std::vector<std::pair<std::string, uint>> estimated_topk = topk.GetTopK();
+        // std::vector<std::pair<std::string, uint>> actual_topk = GetActualTopK(k,train_actual_size);
+
+        // // 計算準確度
+        // auto [precision, recall, f1] = CompareTopK(estimated_topk, actual_topk);
+        // printf("K=%u -> Precision: %.4f, Recall: %.4f, F1-score: %.4f\n", k, precision, recall, f1);
+
+        // // 記錄到 CSV
+        // SaveToCSV(dat_path, train_actual_size.size(), packet_count, k, precision, recall, f1);
+    }
+
+    csv_file.close();
+    delete[] buffer;
     return 0;
 }

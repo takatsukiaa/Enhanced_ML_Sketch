@@ -1,37 +1,5 @@
-#ifndef CMSKETCH_H
-#define CMSKETCH_H
-#include <climits>
-#include "common.h"
-#define THRESH 28
+#include "CMSketch.h"
 using namespace std;
-struct CMSketch:public Sketch{
-public:
-	CMSketch(uint d, uint w);
-	~CMSketch();
-	void Insert(cuc *str);
-	void Enhanced_Insert(cuc* str);
-	void GetHashedValue(cuc *str, uint *counters);
-	uint Query(cuc *str, bool ml = FALSE);
-	// void PrintCounter(cuc* str, uint acc_val);
-	void PrintCounterFile(cuc * str, uint acc_val, FILE * fout);
-	float CalculateAAE(cuc * str, uint acc_val);
-	void LoadPara(cuc *path = CMPATH);
-	float Predict(uint *t);
-	float CalculateAAE_ML(cuc * str, uint acc_val, float query_val);
-	float CalculateARE(cuc * str, uint acc_val);
-	uint Enhanced_Query(cuc* str,int* feature_count);
-	void Enhanced_PrintCounterFile(cuc * str, uint acc_val, FILE * fout);
-private:
-	HashFunction *hf;
-	uint** sketch;
-	float* para;
-	float* mean;
-	float* scale;
-	uint d;
-	uint w;
-	uint *t;
-	uchar** ov_flags;
-};
 
 
 CMSketch::CMSketch(uint d, uint w):d(d), w(w){
@@ -151,22 +119,7 @@ uint CMSketch::Query(cuc *str, bool ml){
 	}
 }
 
-// void CMSketch::PrintCounter(cuc* str, uint acc_val){
-// 	for(uint i = 0; i < d; ++i){
-// 		uint cid = hf->Str2Int(str, i)%w;
-// 		t[i] = sketch[i][cid];
-// 	}
-// 	if (need_analyze(t, d)) {
-// 		std::sort(t, t + d);
-// 		printf("Actual Size: ");
-// 		printf("%u", acc_val);
-// 		printf("Counter Values:");
-// 		for(uint i = 0; i < d; ++i){
-// 			printf(" %u", t[i]);
-// 		}
-// 		printf("\n");
-// 	}
-// }
+
 uint CMSketch::Enhanced_Query(cuc* str, int* feature_count)
 {
     uint min = UINT_MAX;
@@ -252,7 +205,20 @@ void CMSketch::PrintCounterFile(cuc * str, uint acc_val, FILE * fout)
 	fprintf(fout,"%u",t[d-1]);
 	fprintf(fout, "\n");
 }
-
+// void CMSketch::PrintCounter(cuc* str, uint acc_val){
+// 	for(uint i = 0; i < d; ++i){
+// 		uint cid = hf->Str2Int(str, i)%w;
+// 		t[i] = sketch[i][cid];
+// 	}
+// 	if (1) {
+// 		std::sort(t, t+d);
+// 		printf("%u", acc_val);
+// 		for(uint i = 0; i < d; ++i){
+// 			printf(" %u", t[i]);
+// 		}
+// 		printf("\n");
+// 	}
+// }
 void CMSketch::LoadPara(cuc *path){
 	float temp;
 	FILE *file = fopen((const char*)path, "r");
@@ -297,5 +263,11 @@ float CMSketch::Predict(uint *t){
 	}
 	return res;
 }
-
-#endif
+vector<int> CMSketch::GetCounter(cuc* str){
+	vector<int> result;
+	for(uint i = 0; i < d; ++i){
+		uint cid = hf->Str2Int(str, i)%w;
+		result.push_back(sketch[i][cid]);
+	}
+	return result;
+}
