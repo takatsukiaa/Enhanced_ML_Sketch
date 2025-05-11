@@ -1,4 +1,4 @@
-//this is the version each 
+//this is the version of Basic TopK
 
 #include "TopK.h"
 #include <iostream>
@@ -11,7 +11,7 @@
 using namespace std;
 std::unordered_map<std::string, uint> train_actual_size;
 std::unordered_map<std::string, uint> test_actual_size;
-int train_pkt_count = 10000000;
+int train_pkt_count = 3333333;
 int initial_k = 500,max_k = 500,step = 100;
 // 初始化 CSV 檔案
 std::ofstream csv_file("topk_accuracy.csv");
@@ -87,7 +87,6 @@ int main() {
         packet_count++;
         if(packet_count <= train_pkt_count) {
             train_actual_size[data]++;
-            // break;  // 限制讀取前 10000000 筆資料
         }
         else {
             test_actual_size[data]++;
@@ -99,7 +98,7 @@ int main() {
     printf("Training Flow Count: %lu\n", train_actual_size.size());
     printf("Testing Flow Count: %lu\n", test_actual_size.size());
 
-    InitCSV();  // 初始化 CSV 檔案
+    InitCSV();  // 初始化 CSV 檔案(for no ML)
 
     for (uint k = initial_k; k <= max_k; k += step) {
         // 重新建立 TopK
