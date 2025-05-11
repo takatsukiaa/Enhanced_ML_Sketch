@@ -9,7 +9,7 @@ main_CU : main_CU.cpp $(HEADFILE)
 	$(CC) -o main_CU main_CU.cpp $(OPTION)
 
 clean : 
-	rm main
+	rm main main_CU
 
 flows : Flow_Measurements.cpp $(HEADFILE)
 	$(CC) -o Flow_Measurements Flow_Measurements.cpp $(OPTION)
