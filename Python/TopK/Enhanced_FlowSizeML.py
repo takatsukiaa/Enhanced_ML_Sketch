@@ -118,6 +118,8 @@ if insertion_status == 1:
     except:
         print("Failed to Train ML Model")
         conn.sendall(struct.pack('i',-1))
+        conn.close()
+        server_socket.close()
         exit()
 
 # while True:

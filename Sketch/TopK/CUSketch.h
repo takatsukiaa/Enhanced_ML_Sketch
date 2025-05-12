@@ -22,7 +22,7 @@ public:
 	float CalculateAAE(cuc * str, uint acc_val);
 	void LoadPara(cuc *path = CMPATH);
 	float Predict(uint *t);
-	uint Enhanced_Query(cuc* str, int* feature_count);
+	float Enhanced_Query(cuc* str, int* feature_count);
 	void Enhanced_PrintCounterFile(cuc * str, uint acc_val, FILE * fout);
 private:
 	HashFunction *hf;
@@ -208,7 +208,7 @@ uint CUSketch::Query(cuc *str, bool ml){
 	return (uint)Min;
 }
 
-uint CUSketch::Enhanced_Query(cuc* str, int* feature_count)
+float CUSketch::Enhanced_Query(cuc* str, int* feature_count)
 {
 
 		uint min = UINT_MAX;
@@ -241,7 +241,7 @@ uint CUSketch::Enhanced_Query(cuc* str, int* feature_count)
 		}
 	
 		// Step 3: 返回最小值
-		return min;
+		return (float)min;
 	
 }
 

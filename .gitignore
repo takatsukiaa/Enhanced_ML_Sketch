@@ -9,6 +9,8 @@
 !.vscode/extensions.json
 .idea/**/*/
 .venv/*
+*.sh
+*.json
 
 ### VisualStudioCode Patch ###
 # Ignore all local history of files

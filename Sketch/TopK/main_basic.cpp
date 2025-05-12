@@ -53,7 +53,7 @@ string ToHex(const string& binary) {
     return hex;
 }
 
-void Maintain_Set(string data, cuc* constData, int model_created, uint prediction) {
+void Maintain_actualSet(string data, cuc* constData, int model_created, uint prediction) {
     string flow_id = ToHex(data);
     int temp;
     Flow actual_temp = { flow_id, actual_size[data] };
@@ -194,7 +194,7 @@ int main() {
         TestSketch->Enhanced_Insert(constData);
         actual_size[data]++;
         packet_count++;
-        Maintain_Set(data, constData, model_created, 0);
+        Maintain_actualSet(data, constData, model_created, 0);
     }
     printf("Analysis Completed\n");
     

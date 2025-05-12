@@ -8,9 +8,10 @@
 #include <set>
 #include <unordered_set>
 #include <unordered_map>
+#include <iomanip>
   
 #define MICE_threshold 100
-#define TEN_MINUTES 7964894
+#define TEN_MINUTES 10000000 // base: 3982447
 #define K 100
 #define safe_xgboost(call) \
   do { \
@@ -53,54 +54,45 @@ string ToHex(const string& binary) {
     return hex;
 }
 
-void Maintain_Set(string data, cuc* constData, int model_created, float prediction) {
+void Maintain_actualSet(string data, cuc* constData) {
     string flow_id = ToHex(data);
     int temp;
     Flow actual_temp = { flow_id, (float)actual_size[data] };
-    Flow predict_temp = { flow_id, (model_created == 0) ? TestSketch->Enhanced_Query(constData, &temp) : prediction };
-
     // ------- Update actualSet -------
     // Check if a flow with the same id exists
-    if(!actualSet.empty()){
-        if(actual_size[data] > prev(actualSet.end())->size || actualSet.size() < K){
-            auto it_actual = find_if(actualSet.begin(), actualSet.end(), [&](const Flow& f) {
-                return f.id == actual_temp.id;
-            });
-            if (it_actual != actualSet.end()){
-                actualSet.erase(it_actual); // Remove old entry
-            }
-            
-            actualSet.insert(actual_temp); // Insert new one
-            actual_id.insert(actual_temp.id);
+    auto it_actual = find_if(actualSet.begin(), actualSet.end(), [&](const Flow& f) {
+        return f.id == actual_temp.id;
+    });
+    if (it_actual != actualSet.end()){
+        actualSet.erase(it_actual); // Remove old entry
+    }
+    
+    actualSet.insert(actual_temp); // Insert new one
+    actual_id.insert(actual_temp.id);
 
-            if (actualSet.size() > K){
-                string smallest_id = prev(actualSet.end())->id;
-                actual_id.erase(smallest_id);
-                actualSet.erase(prev(actualSet.end())); // Remove smallest
-            }   
-        }
-    }
-    else{
-        actualSet.insert(actual_temp); // Insert new one
-        actual_id.insert(actual_temp.id);
-    }
+    if (actualSet.size() > K){
+        string smallest_id = prev(actualSet.end())->id;
+        actual_id.erase(smallest_id);
+        actualSet.erase(prev(actualSet.end())); // Remove smallest
+    }   
+
+    
+}
+void Maintain_predictSet(string data, cuc* constData, float prediction){
+    int temp;
+    string flow_id = ToHex(data);
+    Flow predict_temp = {flow_id, prediction};
     // ------- Update predictSet -------
-    if(!predictSet.empty()){
-        if(prediction > prev(predictSet.end())->size){
-            auto it_predict = find_if(predictSet.begin(), predictSet.end(), [&](const Flow& f) {
-                return f.id == predict_temp.id;
-            });
-            if (it_predict != predictSet.end())
-                predictSet.erase(it_predict);
-        
-            predictSet.insert(predict_temp);
-            if (predictSet.size() > K)
-                predictSet.erase(prev(predictSet.end()));
-        }
-    }
-    else{
-        predictSet.insert(predict_temp);
-    }
+    auto it_predict = find_if(predictSet.begin(), predictSet.end(), [&](const Flow& f) {
+        return f.id == predict_temp.id;
+    });
+
+    if (it_predict != predictSet.end())
+        predictSet.erase(it_predict);
+
+    predictSet.insert(predict_temp);
+    if (predictSet.size() > K)
+        predictSet.erase(prev(predictSet.end()));
 }
 
 int socket_initiation(){
@@ -161,17 +153,43 @@ float predict(vector<float> features){
     return expm1(out_result[0]);
 }
 
-bool ExistsInBothSets(const string& id) {
-    auto it = find_if(actualSet.begin(), actualSet.end(), [&](const Flow& f) {
-        return f.id == id;
-    });
-    return it != actualSet.end();
+void Train_and_Load_Model(){
+    int model_created=0;
+    FILE *flows = fopen("/home/takatsukiaa/ML-Sketch/Python/TopK/training_flows.csv","w+");
+    uint num_of_flows = 0;
+    printf("10 Mins inserted, training model...\n");
+    for (auto it = actual_size.begin(); it != actual_size.end(); ++it) {
+        cuc* temp = reinterpret_cast<cuc*>(const_cast<char*>(it->first.c_str()));
+        int second = it->second;
+        TestSketch->Enhanced_PrintCounterFile(temp, second, flows);
+        num_of_flows++;
+    }
+    fclose(flows);
+    printf("First 10 minutes contained %u flows\n", num_of_flows);
+    int flag = 1;
+    send(sock, &flag, sizeof(flag), 0);
+    int val_read = recv(sock, &model_created, sizeof(model_created), 0);
+    if(val_read < 0) {
+        perror("Failed to Receive");
+    }
+    if(model_created == -1){
+        perror("Training Failed!");
+    }
+    if(close(sock) < 0){
+        perror("Failed to close socket!");
+    }
+    printf("Training Completed! Loading Model...\n");
+    safe_xgboost(XGBoosterLoadModel(booster4, "model_4.json"));
+    safe_xgboost(XGBoosterLoadModel(booster5, "model_5.json"));
+    safe_xgboost(XGBoosterLoadModel(booster6, "model_6.json"));
+    safe_xgboost(XGBoosterLoadModel(booster7, "model_7.json"));
+    safe_xgboost(XGBoosterLoadModel(booster8, "model_8.json"));
 }
 
 void WriteSetToFile(const set<Flow>& flowSet, const string& label, ofstream& out) {
     out << "Top-K Flows in " << label << ":\n";
     for (const auto& f : flowSet)
-        out << "ID: " << f.id << ", Size: " << f.size << '\n';
+        out << "ID: " << f.id << ", Size: "<< std::fixed << std::setprecision(2) << f.size << std::endl;
     out << '\n';
 }
 
@@ -185,75 +203,57 @@ int main() {
     safe_xgboost(XGBoosterCreate(nullptr, 0, &booster8));
 
     string dat_path = "equinix-chicago1.dat";
-    int model_created=0;
+
     ifstream file(dat_path, ios::binary);
     if (!file) {
         cout << "Error, file not found!\n";
         return -1;
     }
-    FILE *flows = fopen("/home/takatsukiaa/ML-Sketch/Python/TopK/training_flows.csv","w");
+
     unsigned char* buffer = new unsigned char[13];
     memset(buffer, 0, 13);
     
     uint packet_count = 0;
-    uint num_of_flows = 0;
-    int millions = 0;
+
     socket_initiation();
 
-    while (file.read(reinterpret_cast<char*>(buffer), 13) || file.gcount() > 0) {
+    while ((file.read(reinterpret_cast<char*>(buffer), 13) || file.gcount() > 0) && packet_count < TEN_MINUTES) {
         string data(reinterpret_cast<char*>(buffer), file.gcount());
         cuc* constData = buffer;
-        if (packet_count < TEN_MINUTES) {
-            TrainSketch->Enhanced_Insert(constData);
-            TestSketch->Enhanced_Insert(constData);
-            actual_size[data]++;
-            packet_count++;
-            Maintain_Set(data, constData, model_created, 0);
-            continue;
-        }
-        if(!model_created) {
-            printf("10 Mins inserted, training model...\n");
-            packet_count = 0;
-            for (auto it = actual_size.begin(); it != actual_size.end(); ++it) {
-                cuc* temp = reinterpret_cast<cuc*>(const_cast<char*>(it->first.c_str()));
-                int second = it->second;
-                TrainSketch->Enhanced_PrintCounterFile(temp, second, flows);
-                num_of_flows++;
-            }
-            printf("First 10 minutes contained %u flows\n", num_of_flows);
-            int flag = 1;
-            send(sock, &flag, sizeof(flag), 0);
-            int val_read = recv(sock, &model_created, sizeof(model_created), 0);
-            if(val_read < 0) {
-                perror("Failed to Receive");
-            }
-            if(model_created == -1){
-                perror("Training Failed!");
-            }
-            if(close(sock) < 0){
-                perror("Failed to close socket!");
-            }
-            // model_created = 1;
-            printf("Training Completed! Loading Model...\n");
-            safe_xgboost(XGBoosterLoadModel(booster4, "model_4.json"));
-            safe_xgboost(XGBoosterLoadModel(booster5, "model_5.json"));
-            safe_xgboost(XGBoosterLoadModel(booster6, "model_6.json"));
-            safe_xgboost(XGBoosterLoadModel(booster7, "model_7.json"));
-            safe_xgboost(XGBoosterLoadModel(booster8, "model_8.json"));
+        // TrainSketch->Enhanced_Insert(constData);
+        TestSketch->Enhanced_Insert(constData);
+        actual_size[data]++;
+        packet_count++;         
+        if(actualSet.size() < K || actual_size[data] > prev(actualSet.end())->size)
+            Maintain_actualSet(data, constData);
+    }
 
-        }
-        else {
+    file.close();
+    Train_and_Load_Model();
+
+    ifstream file2(dat_path, ios::binary);
+    packet_count = 0;
+
+    while ((file2.read(reinterpret_cast<char*>(buffer), 13) || file2.gcount() > 0)){
+        string data(reinterpret_cast<char*>(buffer), file.gcount());
+        cuc* constData = buffer;
+        actual_size[data]++;
+        packet_count++;
+        vector<float> hashed_value;
+        if(packet_count >= TEN_MINUTES)
             TestSketch->Enhanced_Insert(constData);
-            actual_size[data]++;
-            packet_count++;
-            vector<float> hashed_value;
-            hashed_value = TestSketch->GetHashedValue(constData);
-            std::transform(hashed_value.begin(), hashed_value.end(), hashed_value.begin(), [](float x) {
-                return std::log1p(x);  // float version of log(1 + x)
-            });
-            float prediction = predict(hashed_value);
-            // printf("Actual Value:%u, Predicted Value:%f\n",actual_size[data], prediction);
-            Maintain_Set(data, constData, model_created, prediction);
+        hashed_value = TestSketch->GetHashedValue(constData);
+        std::transform(hashed_value.begin(), hashed_value.end(), hashed_value.begin(), [](float x) {
+            return std::log1p(x);  // float version of log(1 + x)
+        });
+        float prediction = predict(hashed_value);
+        // printf("Actual Value:%u, Predicted Value:%f\n",actual_size[data], prediction);
+        if(packet_count >= TEN_MINUTES){
+            if(actualSet.size() < K || actual_size[data] > prev(actualSet.end())->size)
+                Maintain_actualSet(data, constData);
+        }
+        if(predictSet.size() < K || prediction > prev(predictSet.end())->size){
+            Maintain_predictSet(data, constData, prediction);
         }
     }
     printf("Analysis Completed\n");

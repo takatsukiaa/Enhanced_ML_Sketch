@@ -79,5 +79,6 @@
         "any": "cpp",
         "climits": "cpp"
     },
-    "cmake.sourceDirectory": "/home/takatsukiaa/ML-Sketch/Sketch/TopK"
+    "cmake.sourceDirectory": "/home/takatsukiaa/ML-Sketch/Sketch/TopK",
+    "C_Cpp.errorSquiggles": "disabled"
 }

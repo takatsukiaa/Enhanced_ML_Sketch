@@ -1,9 +1,9 @@
 CC = g++
 OPTION = -std=c++17
 
-main : main.cpp
-	$(CC) -o main main.cpp $(OPTION)
-
+main : 
+	cmake --build build
+	mv build/TopK .
 # train : train.o TopK.o Sketch.o CMSACSketch.o CMSketch.o CUSACSketch.o CUSketch.o PSACSketch.o PSketch.o common.o
 # 	$(CC) -o train train.o TopK.o Sketch.o CMSACSketch.o CMSketch.o CUSACSketch.o CUSketch.o PSACSketch.o PSketch.o common.o
 
@@ -52,5 +52,5 @@ main : main.cpp
 # cld : 
 # 	rm ./MLData/example.train
 
-# clean : 
-# 	rm *.o main train res
+clean : 
+	rm TopK
