@@ -14,8 +14,6 @@ TopK::~TopK(){
 }
 
 // 外部注入訓練環境
-// FILE* training_file;
-// std::unordered_set<std::string>* actual_topk_set;
 void TopK:: SetEnv(FILE* out, std::unordered_set<std::string>* label_set) {
 	training_file = out;
 	actual_topk_set = label_set;
