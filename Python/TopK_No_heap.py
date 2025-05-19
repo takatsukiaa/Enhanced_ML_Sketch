@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 # training_50.csv, testing_50.csv 是 50% 的資料train, 50% 的資料test
 train_df = pd.read_csv("training_250.csv")
 test_df = pd.read_csv("testing_250.csv")
-
+elephant_threshold = 2000
 ## --- 2. 特徵工程：加 log1p + ratio ---
 for df in [train_df, test_df]:
     # log1p 特徵
@@ -26,6 +26,9 @@ for df in [train_df, test_df]:
     df['c_max'] = df[['c1', 'c2', 'c3', 'c4']].max(axis=1)
     df['c_mean'] = df[['c1', 'c2', 'c3', 'c4']].mean(axis=1)
     df['c_std'] = df[['c1', 'c2', 'c3', 'c4']].std(axis=1)
+    # elephant flag
+    df['elephant'] = 0
+    df.loc[df[['c1', 'c2', 'c3', 'c4']].min(axis=1) > elephant_threshold, 'elephant'] = 1
 
 # 3. 特徵欄位設定
 features = [
@@ -34,7 +37,8 @@ features = [
     # 'c_log_min', 
     # 'c_max',
     # 'c_mean',
-    'c_std'
+    'c_std',
+    # 'elephant'
 ]
 
 
@@ -64,7 +68,10 @@ model = XGBClassifier(
 model.fit(X_train_scaled, y_train)
 
 # --- 6. 評估結果 ---
-y_pred = model.predict(X_test_scaled)
+y_pred_proba = model.predict_proba(X_test_scaled)[:, 1]  # 機率為正類（label=1）
+
+threshold = 0.999  # 可以改
+y_pred = (y_pred_proba >= threshold).astype(int)
 
 print("✅ ACC:", accuracy_score(y_test, y_pred))
 print("\n✅ Classification Report:")
