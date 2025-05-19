@@ -14,8 +14,8 @@ using namespace std;
 
 std::unordered_map<std::string, uint> train_actual_size;
 std::unordered_map<std::string, uint> test_actual_size;
-int train_pkt_count = 4000000;
-int initial_k = 100,max_k = 100,step = 100;
+int train_pkt_count = 10000000;
+int initial_k = 250,max_k = 250,step = 100;
 
 // CUSketch* train_sketch;
 // CUSketch* test_sketch;
@@ -106,8 +106,8 @@ int main() {
 
     for (uint k = initial_k; k <= max_k; k += step) {
         // 重新建立 TopK
-        CUSketch* train_sketch = new CUSketch(4, 8192/2);
-        CUSketch* test_sketch = new CUSketch(4, 8192);
+        CUSketch* train_sketch = new CUSketch(4, 8192);
+        CUSketch* test_sketch = new CUSketch(4, 8192*1.5);
         
 		cout<<"**building topk....**"<<endl;
         // 插入流量數據到 TopK
