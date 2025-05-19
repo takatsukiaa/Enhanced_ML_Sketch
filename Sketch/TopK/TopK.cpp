@@ -77,7 +77,7 @@ void TopK::Insert(cuc* str){
 		// 插入新流量
 		heap->erase(MP);
 		heap->insert({s, NO(v)});
-		min = 10000000;
+		min = INT_MAX;
 		for (auto it = heap->begin(); it != heap->end(); ++it) {
 			if (it->second < min) {
 				min = it->second;
