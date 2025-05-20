@@ -235,7 +235,7 @@ int main() {
     packet_count = 0;
 
     while ((file2.read(reinterpret_cast<char*>(buffer), 13) || file2.gcount() > 0)){
-        string data(reinterpret_cast<char*>(buffer), file.gcount());
+        string data(reinterpret_cast<char*>(buffer), file2.gcount());
         cuc* constData = buffer;
         actual_size[data]++;
         packet_count++;
@@ -280,6 +280,7 @@ int main() {
             correct_count++;
         }
     }
+ 
     printf("The accuracy of the predict heap is: %d%% \n", correct_count);
 
     delete TrainSketch;

@@ -66,13 +66,13 @@ CUSketch::~CUSketch(){
 
 void CUSketch::Insert(cuc *str){
 	memset(t, 0, sizeof(t));
-	uint Min = INF_SHORT;
+	uint Min = UINT_MAX;
 	for(uint i = 0; i < d; ++i){
 		uint cid = hf->Str2Int(str, i)%w;
 		t[i] = sketch[i][cid];
 		Min = std::min(Min, t[i]);
 	}
-    if (Min == INF_SHORT)
+    if (Min == UINT_MAX)
         return;
 	for(uint i = 0; i < d; ++i){
 		if (t[i]==Min){
@@ -271,11 +271,11 @@ void CUSketch::PrintCounterFile(cuc * str, uint acc_val, FILE * fout)
 		t[i] = sketch[i][cid];
 	}
 	std::sort(t, t + d);
-	// fprintf(fout, "Actual Size: ");
-	fprintf(fout, "%u ", acc_val);
-	// fprintf(fout, "Counter Values:");
+
+	// fprintf(fout, "%u ", acc_val);
+
 	for(uint i = 0; i < d-1; ++i){
-		fprintf(fout, "%u ", t[i]);
+		fprintf(fout, "%u,", t[i]);
 	}
 	fprintf(fout,"%u",t[d-1]);
 	fprintf(fout, "\n");
