@@ -14,6 +14,9 @@
 
 ### VisualStudioCode Patch ###
 # Ignore all local history of files
+settings.json
+tasks.json
+launch.json
 **/.history
 *.txt
 *.exe
