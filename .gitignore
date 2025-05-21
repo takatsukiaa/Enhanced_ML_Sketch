@@ -2,13 +2,15 @@
 # Edit at https://www.gitignore.io/?templates=visualstudiocode
 
 ### VisualStudioCode ###
-.vscode/*     
+**/.vscode/*     
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
 .idea/**/*/
 .venv/*
+*.sh
+*.json
 
 ### VisualStudioCode Patch ###
 # Ignore all local history of files
@@ -17,6 +19,10 @@
 *.exe
 *.dat
 *.csv
+**/__pycache__
+**/build
+**/xgboost
+
 
 # End of https://www.gitignore.io/api/visualstudiocode
 

@@ -43,7 +43,7 @@ void TopK::Insert(cuc* str){
 		MP = heap->find(s);
 		return;
 	}
-	//if sketch 值> min heap (min heap is full), 插入並更新minheap 
+	//if sketch 值> min heap (min heap is full), 插入並更新min heap 
 	uint v = sketch->Query(str);
 	if(v > min) {
 		heap->erase(MP);

@@ -51,7 +51,8 @@
         "xutility": "cpp",
         "array": "cpp",
         "string_view": "cpp",
-        "random": "cpp"
+        "random": "cpp",
+        "climits": "cpp"
     },
     "makefile.configureOnOpen": false
 }
