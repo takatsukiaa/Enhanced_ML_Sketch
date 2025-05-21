@@ -1,16 +1,16 @@
 #include "TopK.h"
 using namespace std;
 TopK::TopK(uint type, uint d, uint w, uint k):k(k){
-	sketch = new CMSketch(d, w);
+	sketch = new CUSketch(d, w);
 	heap = new std::unordered_map<std::string, NO>();
 	heap->clear();
-	MP = heap->end(); // min pointer
-	min = 1000000;    // flow count in heap
+	MP = heap->end(); // my_min pointer
+	my_min = 1000000;    // flow count in heap
 }
 
 TopK::~TopK(){
 	delete heap;
-	sketch->~CMSketch();
+	sketch->~CUSketch();
 }
 
 // 外部注入訓練環境
@@ -40,10 +40,10 @@ void TopK::Insert(cuc* str){
 	if (itr != heap->end()) {
 		++itr->second;  // 更新 newValue
 		if (itr == MP) {
-			min++;
+			my_min++;
 			for (itr = heap->begin(); itr != heap->end(); ++itr) {
-				if (itr->second < min) {
-					min = itr->second;
+				if (itr->second < my_min) {
+					my_min = itr->second;
 					MP = itr;
 				}
 			}
@@ -55,14 +55,14 @@ void TopK::Insert(cuc* str){
 	if (heap->size() != k) {
 		uint initial = sketch->Query(str);
 		heap->insert({s, NO(initial)});
-		min = initial;
+		my_min = initial;
 		MP = heap->find(s);
 		return;
 	}
 
 	// heap full，檢查是否可擠掉
 	uint v = sketch->Query(str);
-	if (v > min) {
+	if (v > my_min) {
 		// 擠掉 MP，並寫入 training record
 		// std::string kicked_id = MP->first;
 		// NO kicked = MP->second;
@@ -75,10 +75,10 @@ void TopK::Insert(cuc* str){
 		// 插入新流量
 		heap->erase(MP);
 		heap->insert({s, NO(v)});
-		min = INT_MAX;
+		my_min = INT_MAX;
 		for (auto it = heap->begin(); it != heap->end(); ++it) {
-			if (it->second < min) {
-				min = it->second;
+			if (it->second < my_min) {
+				my_min = it->second;
 				MP = it;
 			}
 		}

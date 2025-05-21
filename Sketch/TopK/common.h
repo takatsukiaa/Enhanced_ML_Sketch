@@ -17,7 +17,7 @@
 #define STR_LEN 13
 #define INF_SAC (40000)
 #define INF_SHORT ((1<<16)-1)
-#define min(x, y) (x<y?x:y)
+#define my_min(x, y) (x<y?x:y)
 
 typedef unsigned char uchar;
 typedef unsigned short ushort;

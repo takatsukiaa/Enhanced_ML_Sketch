@@ -131,8 +131,8 @@ int main() {
         file.close();
 
         //寫到csv中
-        ExportSketchFeaturesWithTopK("training.csv", k, train_sketch, train_actual_size);
-        ExportSketchFeaturesWithTopK("testing.csv", k, test_sketch, test_actual_size);
+        ExportSketchFeaturesWithTopK("../../Python/TopK/training.csv", k, train_sketch, train_actual_size);
+        ExportSketchFeaturesWithTopK("../../Python/TopK/testing.csv", k, test_sketch, test_actual_size);
 		cout<<"**finish insert topk**"<<endl;
         
         // 釋放記憶體

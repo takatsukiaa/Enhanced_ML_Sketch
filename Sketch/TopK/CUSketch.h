@@ -4,11 +4,7 @@
 #include "common.h"
 #define THRESH 512
 #define THRESH_BIT 9
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <unistd.h>
 #include <vector>
-
 struct CUSketch{
 public:
 	CUSketch(uint d, uint w);
