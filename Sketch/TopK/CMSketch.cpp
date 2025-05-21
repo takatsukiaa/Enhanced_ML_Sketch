@@ -39,7 +39,7 @@ void CMSketch::Insert(cuc *str){
 }
 void CMSketch::Enhanced_Insert(cuc* str)
 {
-	uint min = 0;
+	uint my_min = 0;
 	uint cid[4];
 	for(uint i=0; i < d; i++)
 	{
@@ -49,7 +49,7 @@ void CMSketch::Enhanced_Insert(cuc* str)
 			return;
 		}
 	}
-	min = sketch[0][cid[0]];
+	my_min = sketch[0][cid[0]];
 	for(uint i = 0; i < d; i++)
 	{
 		if(ov_flags[i][cid[i]] == 0)
@@ -57,9 +57,9 @@ void CMSketch::Enhanced_Insert(cuc* str)
 			sketch[i][cid[i]] = sketch[i][cid[i]]<<22>>22;
 		}
 		++sketch[i][cid[i]];
-		if(sketch[i][cid[i]] < min || sketch[i][cid[i]] == min)
+		if(sketch[i][cid[i]] < my_min || sketch[i][cid[i]] == my_min)
 		{
-			min = sketch[i][cid[i]];
+			my_min = sketch[i][cid[i]];
 		}
 		if(sketch[i][cid[i]]>1023 && ov_flags[i][cid[i]] == 0)
 		{
@@ -70,7 +70,7 @@ void CMSketch::Enhanced_Insert(cuc* str)
 	{
 		if(ov_flags[i][cid[i]] == '\0')
 		{
-			sketch[i][cid[i]] += min<<10;
+			sketch[i][cid[i]] += my_min<<10;
 		}
 	}
 }
@@ -122,7 +122,7 @@ uint CMSketch::Query(cuc *str, bool ml){
 
 uint CMSketch::Enhanced_Query(cuc* str, int* feature_count)
 {
-    uint min = UINT_MAX;
+    uint my_min = UINT_MAX;
     uint cid[3];
     
     // Step 1: 計算hash值
@@ -146,13 +146,13 @@ uint CMSketch::Enhanced_Query(cuc* str, int* feature_count)
         }
         
         // 更新最小值
-        if (value < min) {
-            min = value;
+        if (value < my_min) {
+            my_min = value;
         }
     }
 
     // Step 3: 返回最小值
-    return min;
+    return my_min;
 }
 void CMSketch::Enhanced_PrintCounterFile(cuc* str, uint acc_val, FILE* fout) {
     uint cid[4];

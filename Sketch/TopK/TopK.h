@@ -3,7 +3,7 @@
 
 // #include "Sketch.h"
 #include "CUSketch.h"
-#include "CMSketch.h"
+// #include "CMSketch.h"
 #include <unordered_map>
 #include <unordered_set>
 #include <string>
@@ -51,11 +51,11 @@ public:
 	void DumpToCSV(const std::string& filename);
 
 private:
-	CMSketch* sketch;
+	CUSketch* sketch;
 	uint k;
 	std::unordered_map<std::string, NO>* heap;
-	std::unordered_map<std::string, NO>::iterator MP; // min pointer
-	uint min;
+	std::unordered_map<std::string, NO>::iterator MP; // my_min pointer
+	uint my_min;
 };
 
 

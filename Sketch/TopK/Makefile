@@ -1,10 +1,11 @@
 CC = g++
 OPTION = -std=c++17
 
-OBJS = main.o TopK.o CUSketch.o CMSketch.o common.o
+OBJS = main.o TopK.o CUSketch.o common.o #CMSketch.o 
 
 main: $(OBJS)
 	$(CC) -o main $(OBJS) $(OPTION)
+	rm -f *.o
 
 main.o: main.cpp TopK.h CUSketch.h CMSketch.h common.h
 	$(CC) -c main.cpp $(OPTION)

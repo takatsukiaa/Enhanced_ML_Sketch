@@ -3,6 +3,7 @@
 
 #include <vector>
 #include "common.h"
+#include <climits>
 #define THRESH 28
 
 struct CMSketch : public Sketch {

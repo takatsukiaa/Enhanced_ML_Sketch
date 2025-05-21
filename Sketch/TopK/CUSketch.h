@@ -4,7 +4,7 @@
 #include "common.h"
 #define THRESH 512
 #define THRESH_BIT 9
-
+#include <vector>
 struct CUSketch{
 public:
 	CUSketch(uint d, uint w);

@@ -102,7 +102,7 @@ uint CMSACSketch::Query(cuc *str, bool ml){
     for(uint i = 0; i < d; ++i){
         uint cid = hf->Str2Int(str, i)%w;
         t[i] = CQuery(i, cid);
-        Min = std::min(Min, t[i]);
+        Min = std::my_min(Min, t[i]);
     }
 	if (!ml || !need_analyze(t, d)) {
 		return (uint)Min;

@@ -2,6 +2,7 @@
 # Edit at https://www.gitignore.io/?templates=visualstudiocode
 
 ### VisualStudioCode ###
+*/.vscode/
 .vscode/*     
 !.vscode/settings.json
 !.vscode/tasks.json
@@ -9,14 +10,18 @@
 !.vscode/extensions.json
 .idea/**/*/
 .venv/*
+build/
+__pycache__/
 
 ### VisualStudioCode Patch ###
 # Ignore all local history of files
+settings.json
+tasks.json
 **/.history
 *.txt
 *.exe
 *.dat
 *.csv
-
+build.sh
 # End of https://www.gitignore.io/api/visualstudiocode
 

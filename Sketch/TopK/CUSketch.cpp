@@ -40,7 +40,7 @@ void CUSketch::Insert(cuc *str){
 	for(uint i = 0; i < d; ++i){
 		uint cid = hf->Str2Int(str, i)%w;
 		t[i] = sketch[i][cid];
-		Min = min(Min, t[i]);
+		Min = my_min(Min, t[i]);
 	}
 	if (Min == INF_SHORT)
 		return;
@@ -119,7 +119,7 @@ uint CUSketch::Query(cuc *str, bool ml){
 	for(uint i = 0; i < d; ++i){
 		uint cid = hf->Str2Int(str, i)%w;
 		t[i] = sketch[i][cid];
-		Min = min(Min, t[i]);
+		Min = my_min(Min, t[i]);
 	}
 	if (!ml ) {
 		return (uint)Min;
