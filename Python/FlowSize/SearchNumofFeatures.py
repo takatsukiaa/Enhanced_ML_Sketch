@@ -1,9 +1,10 @@
 import pandas as pd
+import sys
 # Values to search for
 values_to_search = [4, 5, 6, 7, 8]
 # Load the CSV file
 counts = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-file_path = "/home/takatsukiaa/ML-Sketch/Python/FlowSize/training_flows.csv"  # Replace with your CSV file path
+file_path = sys.argv[1]  # Replace with your CSV file path
 with open(file_path,"r") as file:
     for line in file:
             # Split the line by whitespace.

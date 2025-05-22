@@ -2,7 +2,6 @@
 #include <fstream>
 #include <string>
 #include <queue>
-#include <xgboost/c_api.h>
 #include <cmath>
 #include <algorithm>
 #include <set>
@@ -13,15 +12,6 @@
 #define MICE_threshold 100
 #define TEN_MINUTES 10000000 // base: 3982447
 #define K 100
-#define safe_xgboost(call) \
-  do { \
-    int err = (call); \
-    if (err != 0) { \
-      throw std::runtime_error(std::string(__FILE__) + ":" + std::to_string(__LINE__) + \
-                          ": error in " + #call + ": " + XGBGetLastError()); \
-    } \
-  } while (0)
-  
 
 using namespace std;
 struct Flow {
@@ -34,11 +24,9 @@ struct Flow {
 };
 
 static unordered_map<string, uint> actual_size;
-static CUSketch* TrainSketch = new CUSketch(4, 8192);
-static CUSketch* TestSketch = new CUSketch(4, 8192);
+static CUSketch* Sketch = new CUSketch(4, 8192);
 set<Flow> actualSet;
 set<Flow> predictSet;
-static BoosterHandle booster4,booster5,booster6,booster7,booster8;
 int sock = -1;
 static unordered_set<string> actual_id;
 
@@ -78,212 +66,33 @@ void Maintain_actualSet(string data, cuc* constData) {
 
     
 }
-void Maintain_predictSet(string data, cuc* constData, float prediction){
-    int temp;
-    string flow_id = ToHex(data);
-    Flow predict_temp = {flow_id, prediction};
-    // ------- Update predictSet -------
-    auto it_predict = find_if(predictSet.begin(), predictSet.end(), [&](const Flow& f) {
-        return f.id == predict_temp.id;
-    });
-
-    if (it_predict != predictSet.end())
-        predictSet.erase(it_predict);
-
-    predictSet.insert(predict_temp);
-    if (predictSet.size() > K)
-        predictSet.erase(prev(predictSet.end()));
-}
-
-int socket_initiation(){
-    sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock < 0) {
-        perror("Socket creation error");
-        return 1;
-    }
-
-    sockaddr_in serv_addr{};
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(50007);
-    
-    if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) {
-        perror("Invalid address");
-        return 1;
-    }
-
-    if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
-        perror("Connection failed");
-        return 1;
-    }
-    return 0;
-}
-
-float predict(vector<float> features){
-
-    bst_ulong out_len;
-    const float* out_result;
-    DMatrixHandle dmat;
-    safe_xgboost(XGDMatrixCreateFromMat(
-        features.data(),          // pointer to data
-        1,                        // 1 row
-        features.size(),          // number of columns
-        -1.0f,                    // missing value placeholder
-        &dmat));                 // output handle
-    switch(features.size()){
-        case 4:
-            safe_xgboost(XGBoosterPredict(booster4, dmat, 0, 0, 0,&out_len, &out_result));
-            break;
-        case 5:
-            safe_xgboost(XGBoosterPredict(booster5, dmat, 0, 0, 0,&out_len, &out_result));
-            break;
-        case 6:
-            safe_xgboost(XGBoosterPredict(booster6, dmat, 0, 0, 0,&out_len, &out_result));
-            break;
-        case 7:
-            safe_xgboost(XGBoosterPredict(booster7, dmat, 0, 0, 0,&out_len, &out_result));
-            break;
-        case 8:
-            safe_xgboost(XGBoosterPredict(booster8, dmat, 0, 0, 0,&out_len, &out_result));
-            break;
-        default:
-            return -1;
-            break;
-    }
-    safe_xgboost(XGDMatrixFree(dmat));
-    return expm1(out_result[0]);
-}
-
-void Train_and_Load_Model(){
-    int model_created=0;
-    FILE *flows = fopen("/home/takatsukiaa/ML-Sketch/Python/TopK/training_flows.csv","w+");
-    uint num_of_flows = 0;
-    printf("10 Mins inserted, training model...\n");
-    for (auto it = actual_size.begin(); it != actual_size.end(); ++it) {
-        cuc* temp = reinterpret_cast<cuc*>(const_cast<char*>(it->first.c_str()));
-        int second = it->second;
-        TestSketch->Enhanced_PrintCounterFile(temp, second, flows);
-        num_of_flows++;
-    }
-    fclose(flows);
-    printf("First 10 minutes contained %u flows\n", num_of_flows);
-    int flag = 1;
-    send(sock, &flag, sizeof(flag), 0);
-    int val_read = recv(sock, &model_created, sizeof(model_created), 0);
-    if(val_read < 0) {
-        perror("Failed to Receive");
-    }
-    if(model_created == -1){
-        perror("Training Failed!");
-    }
-    if(close(sock) < 0){
-        perror("Failed to close socket!");
-    }
-    printf("Training Completed! Loading Model...\n");
-    safe_xgboost(XGBoosterLoadModel(booster4, "model_4.json"));
-    safe_xgboost(XGBoosterLoadModel(booster5, "model_5.json"));
-    safe_xgboost(XGBoosterLoadModel(booster6, "model_6.json"));
-    safe_xgboost(XGBoosterLoadModel(booster7, "model_7.json"));
-    safe_xgboost(XGBoosterLoadModel(booster8, "model_8.json"));
-}
-
-void WriteSetToFile(const set<Flow>& flowSet, const string& label, ofstream& out) {
-    out << "Top-K Flows in " << label << ":\n";
-    for (const auto& f : flowSet)
-        out << "ID: " << f.id << ", Size: "<< std::fixed << std::setprecision(2) << f.size << std::endl;
-    out << '\n';
-}
 
 int main() {
-
-
-    safe_xgboost(XGBoosterCreate(nullptr, 0, &booster4));
-    safe_xgboost(XGBoosterCreate(nullptr, 0, &booster5));
-    safe_xgboost(XGBoosterCreate(nullptr, 0, &booster6));
-    safe_xgboost(XGBoosterCreate(nullptr, 0, &booster7));
-    safe_xgboost(XGBoosterCreate(nullptr, 0, &booster8));
-
+    
     string dat_path = "equinix-chicago1.dat";
-
+    int model_created=0;
     ifstream file(dat_path, ios::binary);
     if (!file) {
         cout << "Error, file not found!\n";
         return -1;
     }
-
+    FILE *flows = fopen("/home/takatsukiaa/ML-Sketch/Python/TopK/training_flows.csv","w");
     unsigned char* buffer = new unsigned char[13];
     memset(buffer, 0, 13);
     
     uint packet_count = 0;
+    uint num_of_flows = 0;
+    int millions = 0;
 
-    socket_initiation();
-
-    while ((file.read(reinterpret_cast<char*>(buffer), 13) || file.gcount() > 0) && packet_count < TEN_MINUTES) {
+    while (file.read(reinterpret_cast<char*>(buffer), 13) || file.gcount() > 0) {
         string data(reinterpret_cast<char*>(buffer), file.gcount());
         cuc* constData = buffer;
-        // TrainSketch->Enhanced_Insert(constData);
-        TestSketch->Enhanced_Insert(constData);
-        actual_size[data]++;
-        packet_count++;         
-        if(actualSet.size() < K || actual_size[data] > prev(actualSet.end())->size)
+        if (packet_count < TEN_MINUTES) {
+            Sketch->Insert(constData);
+            actual_size[data]++;
+            packet_count++;
             Maintain_actualSet(data, constData);
-    }
-
-    file.close();
-    Train_and_Load_Model();
-
-    ifstream file2(dat_path, ios::binary);
-    packet_count = 0;
-
-    while ((file2.read(reinterpret_cast<char*>(buffer), 13) || file2.gcount() > 0)){
-        string data(reinterpret_cast<char*>(buffer), file2.gcount());
-        cuc* constData = buffer;
-        actual_size[data]++;
-        packet_count++;
-        vector<float> hashed_value;
-        if(packet_count >= TEN_MINUTES)
-            TestSketch->Enhanced_Insert(constData);
-        hashed_value = TestSketch->GetHashedValue(constData);
-        std::transform(hashed_value.begin(), hashed_value.end(), hashed_value.begin(), [](float x) {
-            return std::log1p(x);  // float version of log(1 + x)
-        });
-        float prediction = predict(hashed_value);
-        // printf("Actual Value:%u, Predicted Value:%f\n",actual_size[data], prediction);
-        if(packet_count >= TEN_MINUTES){
-            if(actualSet.size() < K || actual_size[data] > prev(actualSet.end())->size)
-                Maintain_actualSet(data, constData);
-        }
-        if(predictSet.size() < K || prediction > prev(predictSet.end())->size){
-            Maintain_predictSet(data, constData, prediction);
+            continue;
         }
     }
-    printf("Analysis Completed\n");
-    
-    ofstream outfile1("actual_heap.txt");
-    if (!outfile1.is_open()) {
-        cerr << "Failed to open output file.\n";
-        return 1;
-    }
-    WriteSetToFile(actualSet,"actual heap", outfile1);
-    outfile1.close();
-
-    ofstream outfile2("predict_heap.txt");
-    if (!outfile2.is_open()) {
-        cerr << "Failed to open output file.\n";
-        return 1;
-    }
-    WriteSetToFile(predictSet,"predict heap", outfile2);
-    outfile2.close();
-    int correct_count = 0;
-    for (const Flow& pred : predictSet) {
-        if (actual_id.count(pred.id)) {
-            cout << "ID " << pred.id << " exists in both sets.\n";
-            correct_count++;
-        }
-    }
- 
-    printf("The accuracy of the predict heap is: %d%% \n", correct_count);
-
-    delete TrainSketch;
-    delete TestSketch;
-    return 0;
 }
