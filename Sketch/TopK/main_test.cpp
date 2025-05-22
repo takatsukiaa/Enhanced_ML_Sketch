@@ -1,4 +1,4 @@
-#include "CUSketch.h"
+#include "CMSketch.h"
 #include <fstream>
 #include <string>
 #include <queue>
@@ -11,12 +11,12 @@
   
 #define MICE_threshold 100
 #define TEN_MINUTES 10000000 // base: 3982447
-#define K 100
+#define K 250
 
 using namespace std;
 struct Flow {
     string id = "";
-    float size = 0;
+    uint size = 0;
 
     bool operator<(const Flow& other) const {
         return size > other.size; // 讓 priority_queue 變成最小堆
@@ -24,7 +24,7 @@ struct Flow {
 };
 
 static unordered_map<string, uint> actual_size;
-static CUSketch* Sketch = new CUSketch(4, 8192);
+static CMSketch* Sketch = new CMSketch(4, 8192);
 set<Flow> actualSet;
 set<Flow> predictSet;
 int sock = -1;
@@ -42,10 +42,17 @@ string ToHex(const string& binary) {
     return hex;
 }
 
-void Maintain_actualSet(string data, cuc* constData) {
+void WriteSetToFile(const set<Flow>& flowSet, const string& label, ofstream& out) {
+    out << "Top-K Flows in " << label << ":\n";
+    for (const auto& f : flowSet)
+        out << "ID: " << f.id << ", Size: " << f.size << '\n';
+    out << '\n';
+}
+
+void Maintain_actualSet(string data) {
     string flow_id = ToHex(data);
     int temp;
-    Flow actual_temp = { flow_id, (float)actual_size[data] };
+    Flow actual_temp = { flow_id, actual_size[data] };
     // ------- Update actualSet -------
     // Check if a flow with the same id exists
     auto it_actual = find_if(actualSet.begin(), actualSet.end(), [&](const Flow& f) {
@@ -63,8 +70,22 @@ void Maintain_actualSet(string data, cuc* constData) {
         actual_id.erase(smallest_id);
         actualSet.erase(prev(actualSet.end())); // Remove smallest
     }   
-
+}
+void Maintain_predictSet(string data, uint query_val) {
     
+    string flow_id = ToHex(data);
+    Flow temp = { flow_id,  query_val};
+    auto it_actual = find_if(predictSet.begin(), predictSet.end(), [&](const Flow& f) {
+        return f.id == temp.id;
+    });
+    if (it_actual != predictSet.end()){
+        predictSet.erase(it_actual); // Remove old entry
+    }
+    predictSet.insert(temp);
+    if (predictSet.size() > K){
+        predictSet.erase(prev(predictSet.end())); // Remove smallest
+    } 
+
 }
 
 int main() {
@@ -87,12 +108,43 @@ int main() {
     while (file.read(reinterpret_cast<char*>(buffer), 13) || file.gcount() > 0) {
         string data(reinterpret_cast<char*>(buffer), file.gcount());
         cuc* constData = buffer;
-        if (packet_count < TEN_MINUTES) {
-            Sketch->Insert(constData);
-            actual_size[data]++;
-            packet_count++;
-            Maintain_actualSet(data, constData);
-            continue;
+        Sketch->Insert(constData);
+        actual_size[data]++;
+        packet_count++;
+        if(actualSet.size() < K || actual_size[data] > prev(actualSet.end())->size)
+            Maintain_actualSet(data);
+        uint query_val = Sketch->Query(constData);
+        if(predictSet.size()< K || query_val > prev(predictSet.end())->size){
+            Maintain_predictSet(data, query_val);
+        }
+        memset(buffer, 0, sizeof(buffer));
+    }
+    printf("%lu\n",actual_id.size());
+    ofstream outfile1("actual_heap.txt");
+    if (!outfile1.is_open()) {
+        cerr << "Failed to open output file.\n";
+        return 1;
+    }
+    WriteSetToFile(actualSet,"actual heap", outfile1);
+    outfile1.close();
+
+    ofstream outfile2("predict_heap.txt");
+    if (!outfile2.is_open()) {
+        cerr << "Failed to open output file.\n";
+        return 1;
+    }
+    WriteSetToFile(predictSet,"predict heap", outfile2);
+    outfile2.close();
+
+    int correct_count = 0;
+    for (const Flow& pred : predictSet) {
+        auto it_actual = find_if(actualSet.begin(), actualSet.end(), [&](const Flow& f) {
+            return f.id == pred.id;
+        });
+        if (it_actual != actualSet.end()){
+            correct_count++;
         }
     }
+    printf("%d\n", correct_count);
+    return 0;
 }
