@@ -73,7 +73,7 @@ y_pred_proba = model.predict_proba(X_test_scaled)[:, 1]  # 機率為正類（lab
 threshold = 0.999 # 可以改
 y_pred = (y_pred_proba >= threshold).astype(int)
 
-k = 250
+k = 100
 top_k_indices = np.argsort(y_pred_proba)[-k:][::-1]
 top_k_true = y_test[top_k_indices]
 precision_at_k = np.sum(top_k_true) / k
@@ -83,10 +83,10 @@ print("✅ ACC:", accuracy_score(y_test, y_pred))
 # print("\n✅ Classification Report:")
 # print(classification_report(y_test, y_pred, digits=3))
 
-import shap
-explainer = shap.TreeExplainer(model)
-shap_values = explainer.shap_values(X_test)
-shap.summary_plot(shap_values, X_test)
+# import shap
+# explainer = shap.TreeExplainer(model)
+# shap_values = explainer.shap_values(X_test)
+# shap.summary_plot(shap_values, X_test)
 
 
 #TPR, TNR, FPR, FNR
@@ -104,9 +104,9 @@ print("✅ Confusion Matrix:")
 print(cm_reversed)
 
 prec = cm_reversed[0,0]/ (cm_reversed[0,0] + cm_reversed[1,0])
-recall = cm_reversed[0,0] / 250
+recall = cm_reversed[0,0] / k
 
-print(f"Precesion: {prec}")
+print(f"Precision: {prec}")
 print(f"Precision@k: {precision_at_k}")
 print(f"Recall: {recall}")
 # --- 7. 特徵重要性可視化 ---
