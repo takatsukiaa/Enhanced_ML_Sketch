@@ -15,7 +15,7 @@ using namespace std;
 std::unordered_map<std::string, uint> train_actual_size;
 std::unordered_map<std::string, uint> test_actual_size;
 int train_pkt_count = 10000000;
-int initial_k = 250,max_k = 250,step = 100;
+int initial_k = 100,max_k = 100,step = 100;
 
 // CUSketch* train_sketch;
 // CUSketch* test_sketch;
