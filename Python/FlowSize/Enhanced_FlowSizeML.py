@@ -22,34 +22,34 @@ import cudf as cd
 import cupy as cp
 
 
-with open("/home/takatsukiaa/ML-Sketch/Python/FlowSize/equinix-chicago1_output_4.csv", "r") as f:
+with open("/home/takatsukiaa/ML-Sketch/Python/FlowSize/equinix-nyc1_output_4.csv", "r") as f:
     data4 = [list(map(int, line.strip().split(','))) for line in f if line.strip()]
 
-with open("/home/takatsukiaa/ML-Sketch/Python/FlowSize/equinix-chicago1_output_5.csv", "r") as f:
+with open("/home/takatsukiaa/ML-Sketch/Python/FlowSize/equinix-nyc1_output_5.csv", "r") as f:
     data5 = [list(map(int, line.strip().split(','))) for line in f if line.strip()]
 
-with open("/home/takatsukiaa/ML-Sketch/Python/FlowSize/equinix-chicago1_output_6.csv", "r") as f:
+with open("/home/takatsukiaa/ML-Sketch/Python/FlowSize/equinix-nyc1_output_6.csv", "r") as f:
     data6 = [list(map(int, line.strip().split(','))) for line in f if line.strip()]
 
-with open("/home/takatsukiaa/ML-Sketch/Python/FlowSize/equinix-chicago1_output_7.csv", "r") as f:
+with open("/home/takatsukiaa/ML-Sketch/Python/FlowSize/equinix-nyc1_output_7.csv", "r") as f:
     data7 = [list(map(int, line.strip().split(','))) for line in f if line.strip()]
 
-with open("/home/takatsukiaa/ML-Sketch/Python/FlowSize/equinix-chicago1_output_8.csv", "r") as f:
+with open("/home/takatsukiaa/ML-Sketch/Python/FlowSize/equinix-nyc1_output_8.csv", "r") as f:
     data8 = [list(map(int, line.strip().split(','))) for line in f if line.strip()]
 
-with open("/home/takatsukiaa/ML-Sketch/Python/FlowSize/equinix-chicago1_output_4_2.csv", "r") as f:
+with open("/home/takatsukiaa/ML-Sketch/Python/FlowSize/equinix-nyc1_output_4_2.csv", "r") as f:
     test_data4 = [list(map(int, line.strip().split(','))) for line in f if line.strip()]
 
-with open("/home/takatsukiaa/ML-Sketch/Python/FlowSize/equinix-chicago1_output_5_2.csv", "r") as f:
+with open("/home/takatsukiaa/ML-Sketch/Python/FlowSize/equinix-nyc1_output_5_2.csv", "r") as f:
     test_data5 = [list(map(int, line.strip().split(','))) for line in f if line.strip()]
 
-with open("/home/takatsukiaa/ML-Sketch/Python/FlowSize/equinix-chicago1_output_6_2.csv", "r") as f:
+with open("/home/takatsukiaa/ML-Sketch/Python/FlowSize/equinix-nyc1_output_6_2.csv", "r") as f:
     test_data6 = [list(map(int, line.strip().split(','))) for line in f if line.strip()]
 
-with open("/home/takatsukiaa/ML-Sketch/Python/FlowSize/equinix-chicago1_output_7_2.csv", "r") as f:
+with open("/home/takatsukiaa/ML-Sketch/Python/FlowSize/equinix-nyc1_output_7_2.csv", "r") as f:
     test_data7 = [list(map(int, line.strip().split(','))) for line in f if line.strip()]
 
-with open("/home/takatsukiaa/ML-Sketch/Python/FlowSize/equinix-chicago1_output_8_2.csv", "r") as f:
+with open("/home/takatsukiaa/ML-Sketch/Python/FlowSize/equinix-nyc1_output_8_2.csv", "r") as f:
     test_data8 = [list(map(int, line.strip().split(','))) for line in f if line.strip()]
 
 # 轉換為 DataFrame

@@ -1,19 +1,19 @@
 # Define a mapping of feature count to output file names.
 import sys
 if sys.argv[1] == "1":
-    output_files = {4: "equinix-chicago1_output_4.csv",
-                    5: "equinix-chicago1_output_5.csv",
-                    6: "equinix-chicago1_output_6.csv",
-                    7: "equinix-chicago1_output_7.csv",
-                    8: "equinix-chicago1_output_8.csv"}
+    output_files = {4: "equinix-nyc1_output_4.csv",
+                    5: "equinix-nyc1_output_5.csv",
+                    6: "equinix-nyc1_output_6.csv",
+                    7: "equinix-nyc1_output_7.csv",
+                    8: "equinix-nyc1_output_8.csv"}
     raw_path = "/home/takatsukiaa/ML-Sketch/Python/FlowSize/training_flows.csv"
 
 else:
-    output_files = {4: "equinix-chicago1_output_4_2.csv",
-                    5: "equinix-chicago1_output_5_2.csv",
-                    6: "equinix-chicago1_output_6_2.csv",
-                    7: "equinix-chicago1_output_7_2.csv",
-                    8: "equinix-chicago1_output_8_2.csv"}
+    output_files = {4: "equinix-nyc1_output_4_2.csv",
+                    5: "equinix-nyc1_output_5_2.csv",
+                    6: "equinix-nyc1_output_6_2.csv",
+                    7: "equinix-nyc1_output_7_2.csv",
+                    8: "equinix-nyc1_output_8_2.csv"}
     raw_path = "/home/takatsukiaa/ML-Sketch/Python/FlowSize/testing_flows.csv"
 
 # Open the output files for writing.
