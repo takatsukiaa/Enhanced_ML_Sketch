@@ -20,6 +20,7 @@ public:
 	float Predict(uint *t);
 	uint Enhanced_Query(cuc* str,int* feature_count);
 	void Enhanced_PrintCounterFile(cuc * str, uint acc_val, FILE * fout);
+	float CalculateARE(cuc *str, uint acc_val);
 private:
 	HashFunction *hf;
 	uint** sketch;
@@ -62,13 +63,13 @@ CUSketch::~CUSketch(){
 
 void CUSketch::Insert(cuc *str){
 	memset(t, 0, sizeof(t));
-	uint Min = INF_SHORT;
+	uint Min = UINT_MAX;
 	for(uint i = 0; i < d; ++i){
 		uint cid = hf->Str2Int(str, i)%w;
 		t[i] = sketch[i][cid];
 		Min = std::min(Min, t[i]);
 	}
-    if (Min == INF_SHORT)
+    if (Min == UINT_MAX)
         return;
 	for(uint i = 0; i < d; ++i){
 		if (t[i]==Min){
@@ -143,18 +144,18 @@ void CUSketch::Enhanced_PrintCounterFile(cuc* str, uint acc_val, FILE* fout) {
     }
 	fprintf(fout, "%d", feature_count);
     //寫入檔案
-    fprintf(fout, " %u", acc_val); // 實際值
+    fprintf(fout, ",%u", acc_val); // 實際值
     for (uint i = 0; i < d; i++) {
         if (ov_flags[i][cid[i]] == 1) {
             // 如果溢出，輸出 32 位值
             value = sketch[i][cid[i]];
-            fprintf(fout, " %u", value);
+            fprintf(fout, ",%u", value);
         } 
 		else {
             // 如果未溢出，輸出22位值 and 10-bit value
             uint low = sketch[i][cid[i]] & 511;
             uint high = sketch[i][cid[i]] >> THRESH_BIT;
-            fprintf(fout, " %u %u", high, low);
+            fprintf(fout, ",%u,%u", high, low);
         }
     }
     fprintf(fout, "\n"); 
@@ -281,6 +282,16 @@ void CUSketch::LoadPara(cuc *path){
 	for(uint i = 0; i < d; ++i){
 		fscanf(file, "%f", para+i);
 	}
+}
+
+float CUSketch::CalculateARE(cuc* str, uint acc_val)
+{
+	for(uint i = 0; i < d; ++i){
+		uint cid = hf->Str2Int(str, i)%w;
+		t[i] = sketch[i][cid];
+	}
+	std::sort(t, t + d);
+	return abs(((float)t[0] - acc_val)/acc_val);
 }
 
 float CUSketch::Predict(uint *t){

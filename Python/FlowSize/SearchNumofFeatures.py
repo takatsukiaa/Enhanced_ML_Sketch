@@ -1,13 +1,14 @@
 import pandas as pd
+import sys
 # Values to search for
 values_to_search = [4, 5, 6, 7, 8]
 # Load the CSV file
 counts = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-file_path = "/home/takatsukiaa/ML-Sketch/Python/equinix-chicago1_flows_CU.csv"  # Replace with your CSV file path
+file_path = sys.argv[1]  # Replace with your CSV file path
 with open(file_path,"r") as file:
     for line in file:
             # Split the line by whitespace.
-            tokens = line.strip().split()
+            tokens = line.strip().split(',')
             if not tokens:  # Skip empty lines.
                 continue
             try:

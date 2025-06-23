@@ -218,17 +218,17 @@ void CMSketch::Enhanced_PrintCounterFile(cuc* str, uint acc_val, FILE* fout) {
     }
 	fprintf(fout, "%d", feature_count);
     //寫入檔案
-    fprintf(fout, " %u", acc_val); // 實際值
+    fprintf(fout, ",%u", acc_val); // 實際值
     for (uint i = 0; i < d; i++) {
         if (ov_flags[i][cid[i]] == 1) {
             // 如果溢出，輸出 32 位值
             value = sketch[i][cid[i]];
-            fprintf(fout, " %u", value);
+            fprintf(fout, ",%u", value);
         } else {
             // 如果未溢出，輸出22位值 and 10-bit value
             uint low = sketch[i][cid[i]] & 1023;
             uint high = sketch[i][cid[i]] >> 10;
-            fprintf(fout, " %u %u", high, low);
+            fprintf(fout, ",%u,%u", high, low);
         }
     }
     fprintf(fout, "\n"); 

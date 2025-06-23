@@ -22,35 +22,35 @@ import cudf as cd
 import cupy as cp
 
 
-with open("/home/takatsukiaa/ML-Sketch/Python/equinix-chicago1_output_4.csv", "r") as f:
-    data4 = [list(map(int, line.strip().split())) for line in f if line.strip()]
+with open("/home/takatsukiaa/ML-Sketch/Python/FlowSize/equinix-nyc1_output_4.csv", "r") as f:
+    data4 = [list(map(int, line.strip().split(','))) for line in f if line.strip()]
 
-with open("/home/takatsukiaa/ML-Sketch/Python/equinix-chicago1_output_5.csv", "r") as f:
-    data5 = [list(map(int, line.strip().split())) for line in f if line.strip()]
+with open("/home/takatsukiaa/ML-Sketch/Python/FlowSize/equinix-nyc1_output_5.csv", "r") as f:
+    data5 = [list(map(int, line.strip().split(','))) for line in f if line.strip()]
 
-with open("/home/takatsukiaa/ML-Sketch/Python/equinix-chicago1_output_6.csv", "r") as f:
-    data6 = [list(map(int, line.strip().split())) for line in f if line.strip()]
+with open("/home/takatsukiaa/ML-Sketch/Python/FlowSize/equinix-nyc1_output_6.csv", "r") as f:
+    data6 = [list(map(int, line.strip().split(','))) for line in f if line.strip()]
 
-with open("/home/takatsukiaa/ML-Sketch/Python/equinix-chicago1_output_7.csv", "r") as f:
-    data7 = [list(map(int, line.strip().split())) for line in f if line.strip()]
+with open("/home/takatsukiaa/ML-Sketch/Python/FlowSize/equinix-nyc1_output_7.csv", "r") as f:
+    data7 = [list(map(int, line.strip().split(','))) for line in f if line.strip()]
 
-with open("/home/takatsukiaa/ML-Sketch/Python/equinix-chicago1_output_8.csv", "r") as f:
-    data8 = [list(map(int, line.strip().split())) for line in f if line.strip()]
+with open("/home/takatsukiaa/ML-Sketch/Python/FlowSize/equinix-nyc1_output_8.csv", "r") as f:
+    data8 = [list(map(int, line.strip().split(','))) for line in f if line.strip()]
 
-with open("/home/takatsukiaa/ML-Sketch/Python/equinix-chicago1_output_4_2.csv", "r") as f:
-    test_data4 = [list(map(int, line.strip().split())) for line in f if line.strip()]
+with open("/home/takatsukiaa/ML-Sketch/Python/FlowSize/equinix-nyc1_output_4_2.csv", "r") as f:
+    test_data4 = [list(map(int, line.strip().split(','))) for line in f if line.strip()]
 
-with open("/home/takatsukiaa/ML-Sketch/Python/equinix-chicago1_output_5_2.csv", "r") as f:
-    test_data5 = [list(map(int, line.strip().split())) for line in f if line.strip()]
+with open("/home/takatsukiaa/ML-Sketch/Python/FlowSize/equinix-nyc1_output_5_2.csv", "r") as f:
+    test_data5 = [list(map(int, line.strip().split(','))) for line in f if line.strip()]
 
-with open("/home/takatsukiaa/ML-Sketch/Python/equinix-chicago1_output_6_2.csv", "r") as f:
-    test_data6 = [list(map(int, line.strip().split())) for line in f if line.strip()]
+with open("/home/takatsukiaa/ML-Sketch/Python/FlowSize/equinix-nyc1_output_6_2.csv", "r") as f:
+    test_data6 = [list(map(int, line.strip().split(','))) for line in f if line.strip()]
 
-with open("/home/takatsukiaa/ML-Sketch/Python/equinix-chicago1_output_7_2.csv", "r") as f:
-    test_data7 = [list(map(int, line.strip().split())) for line in f if line.strip()]
+with open("/home/takatsukiaa/ML-Sketch/Python/FlowSize/equinix-nyc1_output_7_2.csv", "r") as f:
+    test_data7 = [list(map(int, line.strip().split(','))) for line in f if line.strip()]
 
-with open("/home/takatsukiaa/ML-Sketch/Python/equinix-chicago1_output_8_2.csv", "r") as f:
-    test_data8 = [list(map(int, line.strip().split())) for line in f if line.strip()]
+with open("/home/takatsukiaa/ML-Sketch/Python/FlowSize/equinix-nyc1_output_8_2.csv", "r") as f:
+    test_data8 = [list(map(int, line.strip().split(','))) for line in f if line.strip()]
 
 # 轉換為 DataFrame
 
@@ -58,35 +58,30 @@ with open("/home/takatsukiaa/ML-Sketch/Python/equinix-chicago1_output_8_2.csv", 
 # For feature_count == 4
 columns4 = ['feature_count', 'y'] + [f'feature_{i}' for i in range(1, len(data4[0]) - 1)]
 df4 = pd.DataFrame(data4, columns=columns4)
-# df4.to_csv('convert4.csv', index=False)
 test_columns4 = ['feature_count', 'y'] + [f'feature_{i}' for i in range(1, len(test_data4[0]) - 1)]
 test_df4 = pd.DataFrame(test_data4, columns=test_columns4)
 
 # For feature_count == 5
 columns5 = ['feature_count', 'y'] + [f'feature_{i}' for i in range(1, len(data5[0]) - 1)]
 df5 = pd.DataFrame(data5, columns=columns5)
-# df5.to_csv('convert5.csv', index=False)
 test_columns5 = ['feature_count', 'y'] + [f'feature_{i}' for i in range(1, len(test_data5[0]) - 1)]
 test_df5 =  pd.DataFrame(test_data5, columns=test_columns5)
 
 # For feature_count == 6
 columns6 = ['feature_count', 'y'] + [f'feature_{i}' for i in range(1, len(data6[0]) - 1)]
 df6 = pd.DataFrame(data6, columns=columns6)  # corrected: use data6
-# df6.to_csv('convert6.csv', index=False)
 test_columns6 = ['feature_count', 'y'] + [f'feature_{i}' for i in range(1, len(test_data6[0]) - 1)]
 test_df6 = pd.DataFrame(test_data6, columns=test_columns6)
 
 # For feature_count == 7
 columns7 = ['feature_count', 'y'] + [f'feature_{i}' for i in range(1, len(data7[0]) - 1)]
 df7 = pd.DataFrame(data7, columns=columns7)
-# df7.to_csv('convert7.csv', index=False)
 test_columns7 = ['feature_count', 'y'] + [f'feature_{i}' for i in range(1, len(test_data7[0]) - 1)]
 test_df7 = pd.DataFrame(test_data7, columns=test_columns7)
 
 # For feature_count == 8
 columns8 = ['feature_count', 'y'] + [f'feature_{i}' for i in range(1, len(data8[0]) - 1)]
 df8 = pd.DataFrame(data8, columns=columns8)
-# df8.to_csv('convert8.csv', index=False)
 test_columns8 = ['feature_count', 'y'] + [f'feature_{i}' for i in range(1, len(test_data8[0]) - 1)]
 test_df8 = pd.DataFrame(test_data8, columns=test_columns8)
 
@@ -162,8 +157,6 @@ for feature_count, df in data_by_feature.items():
     y = df['y']
     if len(df.index) > 5000:
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-        # Train Gradient Boosting model
-        # if feature_count == 4:
         model_gb.fit(cd.DataFrame(X_train),cd.DataFrame(y_train))
         models[feature_count] = model_gb
         y_pred_gb = model_gb.predict(cd.DataFrame(X_test))
@@ -177,7 +170,7 @@ for feature_count, df in data_by_feature.items():
         print(f"Training Mean Absolute Error: {mae:.4f}" )
         print(f"Training Mean Relative Error:{mre:.4f}")
         print(f"Training Mean Absolute Error Transformed Back: {mae_original:.4f}" )
-        print(f"Training Mean Relative Error Transformed Back: {mre_original:.4f}")
+        print(f"Training Mean Relative Error Transformed Back: {mre_original:.4f}")        
         # else:
         # # Train random forest model
         #     model_rf.fit(X_train,y_train)       
@@ -226,96 +219,6 @@ for feature_count, df in data_by_feature.items():
         print(f"Mean Absolute Error Transformed Back: {np.mean(mae_original):.4f}" )
         print(f"Mean Relative Error Transformed Back: {np.mean(mre_original):.4f}")
 
-    # Train decision tree model
-    # if len(df.index) > 1000:
-    #     model_tree = DecisionTreeRegressor(max_depth=9)
-    #     model_tree.fit(X_train,y_train)
-    #     y_pred_tree = model_tree.predict(X_test)
-    #     mae_tree = mean_absolute_error(y_test, y_pred_tree)
-    #     r2_tree = r2_score(y_test,y_pred_tree)
-    #     print("Decision Tree:")
-    #     print(f"Feature Count {feature_count}")
-    #     print(f"Mean Absolute Error: {mae_tree:.4f}")
-    #     print(f"R² Score: {r2_tree:.4f}")
-    # else:
-    #     model_tree = DecisionTreeRegressor(max_depth=9)
-    #     r2_tree = cross_val_score(model_tree, X, y, cv=5, scoring="r2")
-    #     mae_tree = cross_val_score(model_tree, X, y, cv=5, scoring="neg_mean_absolute_error")
-    #     mae_tree = -mae_tree
-    #     print("Decision Tree:")
-    #     print(f"Feature Count {feature_count}")
-    #     print(f"Mean Absolute Error: {np.mean(mae_tree):.4f}")
-    #     print(f"R² Score: {r2_tree.mean():.4f}")
-    
-
-    
-    # Train the polynomial model
-    # model_poly = make_pipeline(PolynomialFeatures(degree), LinearRegression())
-    # if len(df.index) > 1000:
-    #     model_poly.fit(X_train, y_train)
-    #     y_pred_poly = model_poly.predict(X_test)
-    #     mae_poly = mean_absolute_error(y_test,y_pred_poly)
-    #     r2_poly = r2_score(y_test,y_pred_poly)
-    #     print("Poly:")
-    #     print(f"Feature Count {feature_count}")
-    #     print(f"Mean Absolute Error: {mae_poly:.4f}")
-    #     print(f"R² Score: {r2_poly:.4f}")
-    # else:
-    #     r2_poly = cross_val_score(model_poly, X, y, cv=5, scoring="r2")
-    #     mae_poly = cross_val_score(model_poly, X, y, cv=5, scoring="neg_mean_absolute_error")
-    #     mae_poly = -mae_poly
-    #     print("Poly:")
-    #     print(f"Feature Count {feature_count}")
-    #     print(f"Mean Absolute Error: {np.mean(mae_poly):.4f}")
-    #     print(f"R² Score: {r2_poly.mean():.4f}")
-
-    
-    # Scale the data
-    # scaler = StandardScaler()
-    # X_train_scaled = scaler.fit_transform(X_train)
-    # X_test_scaled = scaler.transform(X_test)
-
-    # # Train the Ridge Model
-    # model = Ridge(alpha=1)  # Set regularization strength (α)
-    # models[feature_count] = model
-    # model.fit(X_train_scaled, y_train)
-
-    # y_pred_ridge = model.predict(X_test_scaled)
-
-    # mse_ridge = mean_absolute_error(y_test, y_pred_ridge)
-    # r2_ridge = r2_score(y_test, y_pred_ridge)
-
-    # print("Ridge:")
-    # print(f"Feature Count {feature_count}")
-    # print(f"Mean Squared Error: {mse_ridge:.4f}")
-    # print(f"R² Score: {r2_ridge:.4f}")
-
-    # Training the Linear Regression model
-    # model_linear = LinearRegression()
-    # if len(df.index) > 5000:
-    #     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    #     model_linear.fit(X_train, y_train)
-    #     models[feature_count] = model_linear 
-    #     y_pred_linear = model_linear.predict(X_test)
-    #     y_test_original = np.expm1(y_test)
-    #     y_pred_original = np.expm1(y_pred_linear)
-    #     mae_original = mean_absolute_error(y_test_original, y_pred_original)
-    #     mre_original = mean_relative_error(y_test_original, y_pred_original)
-    #     mae = mean_absolute_error(y_test, y_pred_linear)
-    #     mre = mean_relative_error(y_test, y_pred_linear)
-    #     print(f"Feature Count {feature_count}")
-    #     print(f"Mean Absolute Error: {mae:.4f}")
-    #     print(f"Mean Relative Error: {mre:.4f}")
-    # else:
-    #     mre_scorer = make_scorer(mean_relative_error, greater_is_better=False)
-    #     mre = cross_val_score(model_linear, X, y, scoring=mre_scorer, cv=5)
-    #     mre = -mre
-    #     mae = cross_val_score(model_linear, X, y, cv=5, scoring="neg_mean_absolute_error")
-    #     mae = -mae
-    #     print("Linear Regression:")
-    #     print(f"Feature Count {feature_count}")
-    #     print(f"Mean Squared Error: {np.mean(mae):.4f}")
-    #     print(f"R² Score: {np.mean(mre):.4f}")
     total_rows += len(df.index)
     total_mre += np.mean(mre) * len(df.index)
     total_mae += np.mean(mae) * len(df.index)
@@ -340,6 +243,7 @@ total_mre = 0
 total_rows = 0
 total_mre_original = 0
 total_mae_original = 0
+
 print("\nTesting with second half")
 
 def is_model_fitted(model):

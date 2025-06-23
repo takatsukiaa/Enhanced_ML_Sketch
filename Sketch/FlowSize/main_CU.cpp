@@ -10,7 +10,7 @@
 CUSketch *Sketch = new CUSketch(4,8192);
 std::unordered_map<std::string, uint> actual_size;
 int main(int argc, char *argv[]){
-	std::string dat_path = "equinix-chicago1.dat";
+	std::string dat_path = "equinix-nyc1.dat";
 	/*Insert your code here using the flowsize interface*/
 
 	std::ifstream file(dat_path,std::ios::binary);
@@ -39,9 +39,11 @@ int main(int argc, char *argv[]){
 		Sketch->Enhanced_Insert(constData);
 		actual_size[data]++;
 		packet_count++;
-		if(packet_count == 10000000)
-		{
-			break;
+		if(strcmp(argv[1],"1")==0) {
+			if(packet_count == 10000000)
+			{
+				break;
+			}
 		}
 	}
 	file.close();
@@ -50,8 +52,14 @@ int main(int argc, char *argv[]){
 	file.open(dat_path,std::ios::binary);
 	memset(buffer,0,13);
 	// FILE* out = fopen("result.txt", "w");
-	FILE* counters = fopen("equinix-chicago1_counters.txt","w");
-	FILE* all_flows = fopen("equinix-chicago1_flows.txt","w");
+	// FILE* counters = fopen("equinix-nyc1_counters.txt","w");
+	FILE* all_flows;
+	if(strcmp(argv[1],"2") == 0){
+		all_flows = fopen("testing_flows.csv","w");
+	}
+	else {
+		all_flows = fopen("training_flows.csv","w");
+	}
 	float AAE = 0;
 	float ARE = 0;
 	
@@ -64,6 +72,7 @@ int main(int argc, char *argv[]){
 		int second = it->second;
 		Sketch->Enhanced_PrintCounterFile(temp, second, all_flows);
 		AAE += Sketch->CalculateAAE(temp,second);
+		ARE += Sketch->CalculateARE(temp,second);
 		number_of_flows++;
     }
 
@@ -72,18 +81,17 @@ int main(int argc, char *argv[]){
 	// //load parameter form pre-trained model
 	// cuc* path = (unsigned char*)"parameter.txt";
 	// Sketch->LoadPara(path);
-	
-	float aae_ml = 0;
+
 	//query by each packet
 	//這邊不用print counter，因為會重複print FLOW的counter
-	while(file.read(reinterpret_cast<char*>(buffer),13)|| file.gcount() > 0)
-	{	
+	// while(file.read(reinterpret_cast<char*>(buffer),13)|| file.gcount() > 0)
+	// {	
 		
-		std::string data(reinterpret_cast<char*>(buffer), 13);
-		cuc* constData = buffer;
-		uint a = actual_size[data];
-		uint query_val;
-		int fearure_count = 0;
+	// 	std::string data(reinterpret_cast<char*>(buffer), 13);
+	// 	cuc* constData = buffer;
+	// 	uint a = actual_size[data];
+	// 	uint query_val;
+	// 	int fearure_count = 0;
 		// query_val = Sketch->Query(constData, FALSE);
 		// query_val = Sketch->Enhanced_Query(constData,&fearure_count); 
 		// if(query_val - a >MICE_threshold){
@@ -91,19 +99,17 @@ int main(int argc, char *argv[]){
 		// 	Sketch->PrintCounterFile(constData, a, out);
 		// }
 		// aae_ml+=Sketch->CalculateAAE_ML(constData,a,query_val);
-		Sketch->Enhanced_PrintCounterFile(constData, a, counters);
+		// Sketch->Enhanced_PrintCounterFile(constData, a, counters);
 		// Sketch->PrintCounterFile(constData,actual_size[data],counters);
-	}
+	// }
 	
-	// AAE /= number_of_flows;
-	//aae_ml /= packet_count because query by each packet
-	// aae_ml /= packet_count;
-	// std::cout<<"AAE_ML: "<<aae_ml<<std::endl;
-	// std::cout<<"AAE: "<<AAE<<std::endl;
-	// std::cout<<"ARE: "<<ARE<<std::endl;
+	AAE /= number_of_flows;
+	ARE /= number_of_flows;
+	std::cout<<"AAE: "<<AAE<<std::endl;
+	std::cout<<"ARE: "<<ARE<<std::endl;
 	
 	// fclose(out);
-	fclose(counters);
+	// fclose(counters);
 	fclose(all_flows);
 	return 0;
 }

@@ -7,6 +7,10 @@ from sklearn.utils.validation import check_is_fitted
 from xgboost import XGBRegressor
 import cudf as cd
 import cupy as cp
+from Split_counters import split
+import socket
+import struct
+import random
 
 # 自訂 MRE（Mean Relative Error）
 def mean_relative_error(y_true, y_pred):
@@ -33,65 +37,121 @@ def is_model_fitted(model):
     except:
         return False
 
-# 讀入資料
-train_files = {
-    4: "equinix-chicago1_output_4_1.csv",
-    5: "equinix-chicago1_output_5_1.csv",
-    6: "equinix-chicago1_output_6_1.csv",
-    7: "equinix-chicago1_output_7_1.csv",
-    8: "equinix-chicago1_output_8_1.csv",
-}
+HOST = '0.0.0.0'
+PORT = 50007
+server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server_socket.bind((HOST, PORT))
+server_socket.listen(16)
 
-# test_files = {
-#     4: "equinix-chicago1_output_4_2.csv",
-#     5: "equinix-chicago1_output_5_2.csv",
-#     6: "equinix-chicago1_output_6_2.csv",
-#     7: "equinix-chicago1_output_7_2.csv",
-#     8: "equinix-chicago1_output_8_2.csv",
-# }
+print(f"Server listening on {HOST}:{PORT}...")
+conn, addr = server_socket.accept()
+print(f"Connected by {addr}")
 
-# 用pandas讀
-data_by_feature = {k: pd.read_csv(v) for k, v in train_files.items()}
-# test_data_by_feature = {k: pd.read_csv(v) for k, v in test_files.items()}
+data = conn.recv(4)
+(insertion_status,) = struct.unpack('i', data)
 
-models = {}  # 存各feature_count訓練好的模型
-print("Training...")
+if insertion_status == 1:
+    try:
+        print("Insertion completed, start training model!")
+        if split() != 0:
+            print("Error when splitting csv file")
+            exit()
+    
+        with open("/home/takatsukiaa/ML-Sketch/Python/TopK/equinix-chicago1_output_4.csv", "r") as f:
+            data4 = [list(map(int, line.strip().split(','))) for line in f if line.strip()]
 
-# 訓練階段
-total_rows, total_mae, total_mre, total_mae_original, total_mre_original = 0, 0, 0, 0, 0
-# 準備好新的預測結果檔案
-train_result_csv = open("training_prediction_result.csv", "w", newline='')
-train_writer = csv.writer(train_result_csv)
-train_writer.writerow(["ID", "topk_flag", "predicted_size", "true_size"])
+        with open("/home/takatsukiaa/ML-Sketch/Python/TopK/equinix-chicago1_output_5.csv", "r") as f:
+            data5 = [list(map(int, line.strip().split(','))) for line in f if line.strip()]
 
+        with open("/home/takatsukiaa/ML-Sketch/Python/TopK/equinix-chicago1_output_6.csv", "r") as f:
+            data6 = [list(map(int, line.strip().split(','))) for line in f if line.strip()]
 
-for feature_count, df in data_by_feature.items():
-    feature_cols = [f"{i}" for i in range(1, feature_count + 1)]
-    X = df[feature_cols]
-    y = df["actual_size"]
+        with open("/home/takatsukiaa/ML-Sketch/Python/TopK/equinix-chicago1_output_7.csv", "r") as f:
+            data7 = [list(map(int, line.strip().split(','))) for line in f if line.strip()]
 
-    ids = df["ID"]
-    flags = df["topk_flag"]
+        with open("/home/takatsukiaa/ML-Sketch/Python/TopK/equinix-chicago1_output_8.csv", "r") as f:
+            data8 = [list(map(int, line.strip().split(','))) for line in f if line.strip()]
+        # For feature_count == 4
+        columns4 = ['feature_count', 'y'] + [f'feature_{i}' for i in range(1, len(data4[0]) - 1)]
+        df4 = pd.DataFrame(data4, columns=columns4)
 
-    X = X.apply(np.log1p)
-    y = np.log1p(y)
+        # For feature_count == 5
+        columns5 = ['feature_count', 'y'] + [f'feature_{i}' for i in range(1, len(data5[0]) - 1)]
+        df5 = pd.DataFrame(data5, columns=columns5)
 
-    model = XGBRegressor(n_estimators=55, learning_rate=0.25, max_depth=9, n_jobs=-1, device="cuda", objective='reg:absoluteerror', eval_metric='mae')
-    model.fit(cd.DataFrame(X), cd.DataFrame(y))
-    models[feature_count] = model
+        # For feature_count == 6
+        columns6 = ['feature_count', 'y'] + [f'feature_{i}' for i in range(1, len(data6[0]) - 1)]
+        df6 = pd.DataFrame(data6, columns=columns6)  # corrected: use data6
 
-    y_pred_log = model.predict(X)
+        # For feature_count == 7
+        columns7 = ['feature_count', 'y'] + [f'feature_{i}' for i in range(1, len(data7[0]) - 1)]
+        df7 = pd.DataFrame(data7, columns=columns7)
 
-    # 還原
-    y_pred = np.expm1(y_pred_log)
-    y_true = np.expm1(y)
+        # For feature_count == 8
+        columns8 = ['feature_count', 'y'] + [f'feature_{i}' for i in range(1, len(data8[0]) - 1)]
+        df8 = pd.DataFrame(data8, columns=columns8)
 
-    # 存每一筆
-    for i in range(len(ids)):
-        train_writer.writerow([ids.iloc[i], flags.iloc[i], y_pred[i], y_true.iloc[i]])
+        models = {}  # 存各feature_count訓練好的模型
+        data_by_feature = {
+            4: df4,
+            5: df5,
+            6: df6,
+            7: df7,
+            8: df8
+        }
+        
+        print("Training...")
+        for feature_count, df in data_by_feature.items():
+            feature_cols = [f'feature_{i}' for i in range(1, feature_count + 1)]
+            df[feature_cols] = df[feature_cols].apply(lambda x: np.log1p(x))
+            df['y'] = np.log1p(df['y'])
+            X = df.drop(columns=['feature_count', 'y'])
+            y = df['y']
+            model_gb = XGBRegressor(n_estimators=55, learning_rate=0.25, max_depth=9, n_jobs=-1, device='cuda',objective='reg:absoluteerror', eval_metric='mae')
+            model_gb.fit(cd.DataFrame(X),cd.DataFrame(y))
+            # models[feature_count] = model_gb
+            model_gb.save_model(f'/home/takatsukiaa/ML-Sketch/Sketch/TopK/model_{feature_count}.json')
+        conn.sendall(struct.pack('i',1))
+        conn.close()
+        server_socket.close()
+        print("Training is successful")
+    except:
+        print("Failed to Train ML Model")
+        conn.sendall(struct.pack('i',-1))
+        conn.close()
+        server_socket.close()
+        exit()
 
-# 關閉訓練結果檔案
-train_result_csv.close()
+# while True:
+#     # try:
+#         # Receive feature vector
+#         data = conn.recv(32)  # Up to 8 floats (4 bytes each)
+
+#         if not data:
+#             break
+
+#         num_uint = len(data) // 4
+#         features = struct.unpack('i' * num_uint, data)
+#         if len(features) == 1:
+#             (val,) = features
+#             if val == -1:
+#                 break
+#         # print(f"Received features: {features}")
+#         features = np.array(features, dtype=np.uint32)
+#         features = np.reshape(features,(1,len(features)))
+#         row, col = features.shape
+#         # Your ML model prediction here
+#         prediction = models[col].predict(features)  
+#         # Send back the prediction (int)
+#         prediction = int(prediction[0])
+#         conn.sendall(struct.pack('i', prediction))
+    # except:
+        # print("Error when generating prediction!")
+    # finally:
+        # print("Analysis Completed")
+        # conn.close()
+        # server_socket.close()
+
 # ------------------------------------testing------------------------------------
 # print("\nTesting...")
 # # 測試結果檔案
@@ -149,4 +209,4 @@ train_result_csv.close()
 # print(f"MRE (Original Scale): {total_mre_original/total_rows:.4f}")
 
 
-# ##TopK: build heap for 
+# ##TopK: build heap for

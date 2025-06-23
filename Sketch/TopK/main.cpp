@@ -79,9 +79,10 @@ int main() {
         std::cout << "Error: File not found!\n";
         return -1;
     }
-
+    FILE *flows = fopen("../../Python/TopK/training_flows.csv","w");
     unsigned char* buffer = new unsigned char[13];
     memset(buffer, 0, 13);
+    
     uint packet_count = 0;
 
     // 讀取數據一次，統計真實流量數據
