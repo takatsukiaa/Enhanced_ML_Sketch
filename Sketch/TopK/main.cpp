@@ -79,7 +79,7 @@ int main() {
         std::cout << "Error: File not found!\n";
         return -1;
     }
-    FILE *flows = fopen("/home/takatsukiaa/ML-Sketch/Python/TopK/training_flows.csv","w");
+    FILE *flows = fopen("../../Python/TopK/training_flows.csv","w");
     unsigned char* buffer = new unsigned char[13];
     memset(buffer, 0, 13);
     

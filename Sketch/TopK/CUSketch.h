@@ -11,14 +11,14 @@ public:
 	~CUSketch();
 	void Insert(cuc *str);
 	void Enhanced_Insert(cuc* str);
-	std::vector<float> GetHashedValue(cuc *str);
+	void GetHashedValue(cuc *str, uint *counters);
 	uint Query(cuc *str, bool ml = FALSE);
 	void PrintCounter(cuc* str, uint acc_val);
 	void PrintCounterFile(cuc * str, uint acc_val, FILE * fout);
 	float CalculateAAE(cuc * str, uint acc_val);
 	void LoadPara(cuc *path = CMPATH);
 	float Predict(uint *t);
-	float Enhanced_Query(cuc* str, int* feature_count);
+	uint Enhanced_Query(cuc* str,int* feature_count);
 	void Enhanced_PrintCounterFile(cuc * str, uint acc_val, FILE * fout);
 	std::vector<int> GetCounter(cuc* str);
 private:
