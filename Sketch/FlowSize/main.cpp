@@ -56,10 +56,10 @@ int main(int argc, char *argv[]){
 	float AAE = 0;
 	float ARE = 0;
 	if(strcmp(argv[1],"2") == 0){
-		all_flows = fopen("testing_flows.csv","w");
+		all_flows = fopen("../../Python/FlowSize/testing_flows.csv","w");
 	}
 	else {
-		all_flows = fopen("training_flows.csv","w");
+		all_flows = fopen("../../Python/FlowSize/testing_flows.csv","w");
 	}
 
 	//print all flows to file

@@ -55,10 +55,10 @@ int main(int argc, char *argv[]){
 	// FILE* counters = fopen("equinix-nyc1_counters.txt","w");
 	FILE* all_flows;
 	if(strcmp(argv[1],"2") == 0){
-		all_flows = fopen("testing_flows.csv","w");
+		all_flows = fopen("../../Python/FlowSize/testing_flows.csv","w");
 	}
 	else {
-		all_flows = fopen("training_flows.csv","w");
+		all_flows = fopen("../../Python/FlowSize/training_flows.csv","w");
 	}
 	float AAE = 0;
 	float ARE = 0;
