@@ -1,6 +1,6 @@
 CC = g++
-OPTION = -std=c++17
-HEADFILE = CMSketch.h CMSACSketch.h CUSketch.h CUSACSketch.h PSketch.h PSACSketch.h
+OPTION = -std=c++17 -g
+HEADFILE = CMSketch.h CUSketch.h
 
 main : main.cpp $(HEADFILE)
 	$(CC) -o main main.cpp $(OPTION)
@@ -10,6 +10,3 @@ main_CU : main_CU.cpp $(HEADFILE)
 
 clean : 
 	rm main main_CU
-
-flows : Flow_Measurements.cpp $(HEADFILE)
-	$(CC) -o Flow_Measurements Flow_Measurements.cpp $(OPTION)
